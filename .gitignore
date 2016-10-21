@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# pyc files
+*.pyc
+
+# db files
+0000*
+
