@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<h1>Test Dashboard Page!</h1>
+<div>
+	<p>These are your not so much stocks that haven't been solded yet. Q___Q </p>
+
+</div>
+
+<div class="container">
+    
+      <h2 class="form-signin-heading">Make order here</h2>
+      <input type="text" class="input-block-level" placeholder="Instrument id" name="Instrument_id" id="Instrument_id"><br/>
+      <input type="text" class="input-block-level" placeholder="Quantity" name="Quantity" id="Quantity"><br/>
+      <input type="text" class="input-block-level" placeholder="Discount" name="Discount" id="Discount"> <br/>
+      <input type="text" class="input-block-level" id="order_size">
+      <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button>
+
+
+  </div> 
+
+
+<div id='svg-wrap'>
+	<svg>
+
+	</svg>
+</div>
+
+
+<script type="text/javascript">
+	
+// d3.json()
+
+{% autoescape off %}
+// var data = {{apple}}
+{% endautoescape %}
+
+// add index for each element
+// for(var i = 0; i < data.length; i++){
+// 	data[i]['index'] = i;	
+// }
+
+
+
+// var svg = d3.select('#svg-wrap > svg');
+
+// svg.attr('width', 800)
+// 	.attr('height', 300);
+
+// var g = svg.append('g')
+// 	.attr('class','bar-chart-group');
+
+// var stocks = g.selectAll('g').data(data).enter()
+// 	.append('g');
+
+// stocks.append('rect')
+// 	.attr('transform', function(d){
+// 		return 'translate(' + d.index * 60 + ',' + (100 - d.quantity/100) + ')'; 
+// 	})
+// 	.attr('width', 20)
+// 	.attr('height', function(d){
+// 		return d.quantity/100;
+// 	})
+// 	.style('fill', 'red');
+
+// stocks.append('text')
+// 	.text(function(d){
+// 		return d.company_name;
+// 	})
+// 	.attr('transform', function(d){
+// 		return 'translate(' + d.index * 60 + ', ' + 110 + ')';
+// 	});
+
+function WebSocketTest()
+{
+  if ("WebSocket" in window)
+  {
+     // Let us open a web socket
+     var ws = new WebSocket("ws://" + window.location.host + "/chat/");
+     ws.onopen = function()
+     {
+        // Web Socket is connected, send data using send()
+        ws.send(JSON.stringify({"instrument_id": document.getElementById("Instrument_id").value, 
+                                "quantity": document.getElementById("Quantity").value, 
+                                "order_discount": document.getElementById("Discount").value,
+                                "order_size": document.getElementById("order_size").value
+                                }));
+
+        alert("Message is sent...");
+     };
+     ws.onmessage = function (evt) 
+     { 
+        var received_msg = evt.data;
+        // alert("Message is received...");
+        console.log(received_msg);
+        console.log("message received!");
+     };
+     ws.onclose = function()
+     { 
+        // websocket is closed.
+        // alert("Connection is closed..."); 
+        console.log("connection closed");
+     };
+  }
+  else
+  {
+     // The browser doesn't support WebSocket
+     alert("WebSocket NOT supported by your Browser!");
+  }
+}
+
+
+
+
+</script>
+
+
+</body>
+
+</html>
