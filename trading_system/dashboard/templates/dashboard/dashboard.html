@@ -4,32 +4,46 @@
 <meta charset="utf-8">
 </head>
 <body>
+
+<style type="text/css">
+.left-col{
+  float: left;
+  width: 30%;
+  max-width: 430px;
+}
+
+.right-col{
+  float: left;
+  width: 70%;
+  height: 400px;
+}
+
+</style>
+
 <script src="https://d3js.org/d3.v4.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
-<h1>Test Dashboard Page!</h1>
-<div>
-	<p>These are your not so much stocks that haven't been solded yet. Q___Q </p>
-
-</div>
+<h1>Welcome to JP Morgan Trader's Dashboard</h1>
 
 <div class="container">
-    
-      <h2 class="form-signin-heading">Make order here</h2>
-      <input type="text" class="input-block-level" placeholder="Instrument id" name="Instrument_id" id="Instrument_id"><br/>
-      <input type="text" class="input-block-level" placeholder="Quantity" name="Quantity" id="Quantity"><br/>
-      <input type="text" class="input-block-level" placeholder="Discount" name="Discount" id="Discount"> <br/>
-      <input type="text" class="input-block-level" id="order_size">
-      <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button>
+  <div class='left-col'>
+    <h2 class="form-signin-heading">Make order here</h2>
+    <div>
+      <div><input type="text" class="input-block-level" placeholder="Instrument ID" name="Instrument_id" id="instrument_id"></div>
+      <div><input type="text" class="input-block-level" placeholder="Quantity" name="Quantity" id="quantity"></div>
+      <div><input type="text" class="input-block-level" placeholder="Order size" id="order_size"></div>
+      <div><input type="text" class="input-block-level" placeholder="Discount" name="Discount" id="discount"></div>
+    </div>
 
+    <!-- <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button> -->
+    <button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>
+  </div>
 
-  </div> 
+</div>
+<div class="right-col">
 
+  <!-- visualization should be implemented here -->
 
-<div id='svg-wrap'>
-	<svg>
-
-	</svg>
 </div>
 
 
@@ -47,41 +61,11 @@
 // }
 
 
-
-// var svg = d3.select('#svg-wrap > svg');
-
-// svg.attr('width', 800)
-// 	.attr('height', 300);
-
-// var g = svg.append('g')
-// 	.attr('class','bar-chart-group');
-
-// var stocks = g.selectAll('g').data(data).enter()
-// 	.append('g');
-
-// stocks.append('rect')
-// 	.attr('transform', function(d){
-// 		return 'translate(' + d.index * 60 + ',' + (100 - d.quantity/100) + ')'; 
-// 	})
-// 	.attr('width', 20)
-// 	.attr('height', function(d){
-// 		return d.quantity/100;
-// 	})
-// 	.style('fill', 'red');
-
-// stocks.append('text')
-// 	.text(function(d){
-// 		return d.company_name;
-// 	})
-// 	.attr('transform', function(d){
-// 		return 'translate(' + d.index * 60 + ', ' + 110 + ')';
-// 	});
-
 function WebSocketTest()
 {
   if ("WebSocket" in window)
   {
-     // Let us open a web socket
+     // open a websocket
      var ws = new WebSocket("ws://" + window.location.host + "/chat/");
      ws.onopen = function()
      {
@@ -114,6 +98,41 @@ function WebSocketTest()
      alert("WebSocket NOT supported by your Browser!");
   }
 }
+
+
+
+/************** NOT DONE YET **********************/
+/************** CHI-AN WORKING ********************/
+
+function collectOrderData(){
+  // a function that returns a json object of 
+  // form data. Check for missing values.
+
+  var result = {};
+  var data_fields = ["instrument_id", "quantity", "discount", "order_size"];
+  var error_message = []
+
+  for (var i = 0; i < data_fields.length; i++) {
+    var value = document.getElementById(data_fields[i]);
+    if (value === "") error_message.push(data_fields[i]);
+    result[data_fields[i]] = value;
+  };
+
+
+  if (error_message.length > 0) {
+    alert(error_message.join(", ") + " are not given in your order!");
+    return null;
+  }
+  else{
+    return result;
+  }
+
+}
+
+
+
+
+document.getElementById("make-order-btn").addEventListener("click", WebSocketTest);
 
 
 
