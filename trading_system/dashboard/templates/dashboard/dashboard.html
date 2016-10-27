@@ -5,47 +5,184 @@
 </head>
 <body>
 
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <style type="text/css">
 .left-col{
   float: left;
-  width: 30%;
+  width: 20%;
   max-width: 430px;
 }
 
 .right-col{
   float: left;
-  width: 70%;
+  width: 80%;
   height: 400px;
 }
 
+.line {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.x.axis line {
+  shape-rendering: auto;
+}
+
+path.domain{
+  /*stroke-width: 1.5px;*/
+  fill: none;
+  shape-rendering: crispEdges;
+}
+
+
+#realtime-log{
+  margin-top: 20px;
+  margin-left: 65px;
+  height: 100px;
+  overflow: scroll;
+}
+
+.instrument_ids{
+  margin-left: 78px;
+}
+
+
 </style>
 
-<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3.v3.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
-<h1>Welcome to JP Morgan Trader's Dashboard</h1>
 
-<div class="container">
+
+<div class="container-fluid">
+  <h1>Welcome to JP Morgan Trader's Dashboard</h1>
+
   <div class='left-col'>
     <h2 class="form-signin-heading">Make order here</h2>
     <div>
-      <div><input type="text" class="input-block-level" placeholder="Instrument ID" name="Instrument_id" id="instrument_id"></div>
-      <div><input type="text" class="input-block-level" placeholder="Quantity" name="Quantity" id="quantity"></div>
-      <div><input type="text" class="input-block-level" placeholder="Order size" id="order_size"></div>
-      <div><input type="text" class="input-block-level" placeholder="Discount" name="Discount" id="discount"></div>
+      <div class="form-group">
+        <label for="stockID">Instrument ID</label>
+        <input type="text" class="input-block-level form-control" placeholder="Instrument ID" name="Instrument_id" id="instrument_id">
+      </div>
+      <div class="form-group">
+        <label for="ParentOrder">Total Quantity (Parent Order)</label>
+        <input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">
+      </div>
+      <div class="form-group">
+        <label for="ChildOrder">Order Size (Child Order)</label>
+        <input type="text" class="input-block-level form-control" placeholder="Order size" id="order_size">
+      </div>
+      <div class="form-group">
+        <label for="Discount">Discount</label>
+        <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="discount">
+      </div>
     </div>
 
     <!-- <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button> -->
     <button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>
   </div>
 
+  <div class="right-col">
+
+    <!-- visualization should be implemented here -->
+    <svg id="test-chart"></svg>
+    <div class="container-fluid" >
+      <p id="realtime-log"></p>
+    </div>
+
+    <script>(function() {
+
+    var n = 243,
+        duration = 1000,
+        now = new Date(Date.now() - duration),
+        count = 0,
+        // a list of tuple with format (price, timestamp)
+        data = d3.range(n).map(function() { return 0; });
+
+    var margin = {top: 6, right: 0, bottom: 20, left: 40},
+        width = 960 - margin.right,
+        height = 120 - margin.top - margin.bottom;
+
+    var x = d3.time.scale()
+        .domain([now - (n - 2) * duration, now - duration])
+        .range([0, width]);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var line = d3.svg.line()
+        .interpolate("basis")
+        .x(function(d, i) { return x(now - (n - 1 - i) * duration); })
+        .y(function(d, i) { return y(d); });
+
+    var svg = d3.select(".right-col").select("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .style("margin-left", margin.left + "px")
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("defs").append("clipPath")
+        .attr("id", "clip")
+      .append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    var axis = svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
+
+    var path = svg.append("g")
+        .attr("clip-path", "url(#clip)")
+      .append("path")
+        .datum(data)
+        .attr("class", "line");
+
+    var transition = d3.select({}).transition()
+        .duration(duration)
+        .ease("linear");
+
+    // d3.select(window)
+    //     .on("scroll", function() { ++count; });
+
+    (function tick() {
+      transition = transition.each(function() {
+
+        // update the domains
+        now = new Date();
+        x.domain([now - (n - 2) * duration, now - duration]);
+        y.domain([0, d3.max(data)]);
+
+        // push the accumulated count onto the back, and reset the count
+        data.push(Math.min(30, count));
+
+        count = 0;
+
+        // redraw the line
+        svg.select(".line")
+            .attr("d", line)
+            .attr("transform", null);
+
+        // slide the x-axis left
+        axis.call(x.axis);
+
+        // slide the line left
+        path.transition()
+            .attr("transform", "translate(" + x(now - (n - 1) * duration) + ")");
+
+        // pop the old data point off the front
+        data.shift();
+
+      }).transition().each("start", tick);
+    })();
+
+    })()</script>
+  </div>
+
 </div>
-<div class="right-col">
-
-  <!-- visualization should be implemented here -->
-
-</div>
-
 
 <script type="text/javascript">
 	
@@ -60,6 +197,28 @@
 // 	data[i]['index'] = i;	
 // }
 
+function dataHandler(d){
+  console.log(d);
+  var data_type = d['message_type'];
+  var timestamp = d['timestamp'];
+
+  if (data_type === "quote"){
+    var quote = d["quote"];
+    this.innerHTML = this.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
+
+  }else if(data_type === "sold_message"){
+    var sold_price = d['sold_price'];
+    var remaining_quantity = d['remaining_quantity'];
+    this.innerHTML = this.innerHTML + "<span>sold price:" + sold_price.toString() + ", Remaining: " + remaining_quantity.toString() + "</span><br>";
+  }
+
+  this.scrollTop = this.scrollHeight;
+
+}
+
+
+var updateProgress = dataHandler.bind(document.getElementById("realtime-log"));
+
 
 function WebSocketTest()
 {
@@ -70,13 +229,27 @@ function WebSocketTest()
      ws.onopen = function()
      {
         // Web Socket is connected, send data using send()
-        ws.send(JSON.stringify({"instrument_id": document.getElementById("Instrument_id").value, 
-                                "quantity": document.getElementById("Quantity").value, 
-                                "order_discount": document.getElementById("Discount").value,
+        ws.send(JSON.stringify({"instrument_id": document.getElementById("instrument_id").value, 
+                                "quantity": document.getElementById("quantity").value, 
+                                "order_discount": document.getElementById("discount").value,
                                 "order_size": document.getElementById("order_size").value
                                 }));
 
         alert("Message is sent...");
+        
+
+        // a temp function to add a label into the realtime view for demo use...
+        // need to re-implement in the future...
+
+        var title_label = document.createElement("h3");
+        title_label.innerHTML = document.getElementById("instrument_id").value;
+        title_label.className = "instrument_ids";
+
+        document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
+
+        clearInputForm();
+
+
      };
      ws.onmessage = function (evt) 
      { 
@@ -84,6 +257,9 @@ function WebSocketTest()
         // alert("Message is received...");
         console.log(received_msg);
         console.log("message received!");
+
+        updateProgress( JSON.parse(received_msg) );
+
      };
      ws.onclose = function()
      { 
@@ -95,14 +271,25 @@ function WebSocketTest()
   else
   {
      // The browser doesn't support WebSocket
-     alert("WebSocket NOT supported by your Browser!");
+     console.log("websocket is not supported by the browser...");
+     // alert("WebSocket NOT supported by your Browser!");
   }
+}
+
+
+function clearInputForm(){
+  document.getElementById("instrument_id").value = "";
+  document.getElementById("quantity").value      = "";
+  document.getElementById("discount").value      = "";
+  document.getElementById("order_size").value    = "";
 }
 
 
 
 /************** NOT DONE YET **********************/
 /************** CHI-AN WORKING ********************/
+
+
 
 function collectOrderData(){
   // a function that returns a json object of 
