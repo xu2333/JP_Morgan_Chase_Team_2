@@ -39,48 +39,143 @@ class SessionManager(threading.Thread):
 
     def quote(self):
         # talk to market
-        if self.channel:
-            for _ in range(self.bid_window):
-                time.sleep(1)
-                response = request.urlopen(self.QUERY.format(random.random())).read()
+        response = request.urlopen(self.QUERY.format(random.random())).read()
+        
+        quote = json.loads(response.decode("utf-8"))
+        price = float(quote['top_bid']['price'])
+        
+        quote_message = {
+                "id": 1,
+                "message_type": "quote",
+                "quote": price,
+                "timestamp": quote['timestamp'],
                 
-                quote = json.loads(response.decode("utf-8"))
-                price = float(quote['top_bid']['price'])
-                
-                quote_message = {
-                        "id": 1,
-                        "message_type": "quote",
-                        "quote": price,
-                        "timestamp": quote['timestamp'],
-                        
-                        "remaining_quantity": 0,
-                        "sold_quantity": "",
-                        "sold_price": "",
-                        "pnl": 0
-                    }
+                "remaining_quantity": 0,
+                "sold_quantity": "",
+                "sold_price": "",
+                "pnl": 0
+            }
 
-                channel.send({
-                    "text": json.dumps(quote_message)
-                })
+        return quote_message, price
+        
 
     def run(self):
         while True:
+            # Pass by 1 second
+            time.sleep(1)
+            if not self.channel:
+                continue
 
+            # Quote the market
+            quote_json, price = self.quote()
+
+            return_list = [quote_json]
+
+            # remove the termiated session
             del_sid = [session.session_id for session in session_manager.values() if session.terminate]
             for sid in del_sid:
                 self.removeSession(sid)
             
+            # For each order
             if self.session_manager:
-                time.sleep(1)
-                for key, session in self.session_manager.items():
-                    pass
-                    
+                for session in self.session_manager.values():
+                    order_json = session.trade(price)
 
+                    if order_json:
+                        return_list.append(order_json)
 
+            self.channel.send({
+                "text": json.dumps(return_list)
+            })
 
+class Session_order(object):
+    def __init__(self, session_id, quantity, order_size, order_discount):
+        self.session_id = session_id
+        self.quantity = quantity
+        self.order_size = order_size
+        self.order_discount = order_discount
 
+        # a value to return at the end of trade function
+        self.pnl = 0
 
+        # the time to break between each bid attempt
+        self.bid_window = 5
+        self.step = 0
 
+        # a paramter to terminate trading when the orders aren't complete yet
+        self.terminate = False
+
+    def trade(self, price):
+        '''
+        in: a socket channel to pipeline data to users client interface
+
+        a function that keeps talking to the market until 
+        1. quantity of this session is done
+        2. the terminate is set to true
+        '''
+
+        # Server API URLs
+        QUERY = "http://localhost:8080/query?id={}"
+        ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
+
+        message = None
+
+        if self.quantity <= 0:
+            self.terminate = True
+            return message
+
+        if self.step != self.bid_window:
+            self.step += 1
+
+        else:
+            self.step = 0
+
+            # Attempt to execute a sell order. By only referencing the last price we retrieved
+            order_size = min(self.quantity, self.order_size)
+            order_args = (order_size, price - self.order_discount)
+
+            url   = ORDER.format(random.random(), *order_args)
+            order = json.loads(request.urlopen(url).read().decode("utf-8"))
+
+            # Update the PnL if the order was filled.
+            if order['avg_price'] > 0:
+                price    = order['avg_price']
+                notional = float(price * order_size)
+                self.pnl += notional
+                self.quantity -= order_size
+                
+                sold_message = {
+                        "id": 1,
+                        "message_type": "sold_message",
+                        "quote": "",
+                        "timestamp": order['timestamp'],
+                        "remaining_quantity": self.quantity,
+                        "sold_quantity": order_size,
+                        "sold_price": price,
+                        "pnl": self.pnl
+                    }
+
+                print("Sold {:,} for ${:,}/share, ${:,} notional".format(order_size, price, notional) )
+                print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
+
+                message = sold_message 
+            else:
+                unfilled_messagepip = {
+                        "id": 1,
+                        "message_type": "unfilled_order",
+                        "quote": "",
+                        "timestamp": order['timestamp'],
+                        "remaining_quantity": self.quantity,
+                        "sold_quantity": "",
+                        "sold_price": "",
+                        "pnl": self.pnl 
+                    }
+
+                print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
+
+                message = unfilled_message
+
+        return message
 
 
 class Session(object):
@@ -203,6 +298,7 @@ class Session(object):
             time.sleep(1)
 
 sm = SessionManager()
+sm.start()
 
 def ws_message(message):
     # ASGI WebSocket packet-received and send-packet message types
@@ -235,7 +331,9 @@ def ws_message(message):
 
     sm.add_seesion(instrument_id, session)
     sm.set_channel(message.reply_channel)
-    session.trade(message.reply_channel)
+
+
+    # session.trade(message.reply_channel)
 
     # Reply the instrument_id --> means receive the order successfully
     
