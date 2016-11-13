@@ -64,7 +64,7 @@ class Session(object):
 				price = float(quote['top_bid']['price'])
 				
 				quote_message = {
-						"id": 1,
+						"id": self.session_id,
 						"message_type": "quote",
 						"quote": price,
 						"timestamp": quote['timestamp'],
