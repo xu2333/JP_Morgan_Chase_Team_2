@@ -87,10 +87,10 @@ path.domain{
   <div class="right-col">
 
     <!-- visualization should be implemented here -->
-    <svg id="test-chart"></svg>
+    <!-- <svg id="test-chart"></svg>
     <div class="container-fluid" >
       <p id="realtime-log"></p>
-    </div>
+    </div> -->
 
     <script>(function() {
 
@@ -196,6 +196,8 @@ path.domain{
 
 // Create a name space 
 let JPTrader = {
+  // current orders array saves an object in each element with one attribute id 
+  // and a method binded on the corresponding div 
   currentOrders  : [],
   finishedOrders : []
 };
@@ -289,7 +291,8 @@ JPTrader.validateOrderInput = function(){
 
 /**
 A function that checks the existence of websocket, if not init, init it. Otherwise, use it.
-
+@param {None}
+@return {undefined}
 */
 JPTrader.sendWithSocket = function(orderData){
 
@@ -300,15 +303,41 @@ JPTrader.sendWithSocket = function(orderData){
     console.log('Message is sent...');
     this.ws.send( JSON.stringify( orderData) );
     
+    /* WORK IN PROGRESS */
     // a temp function to add a label into the realtime view for demo use...
     // need to re-implement in the future...
-    var title_label = document.createElement("h3");
-    // title_label.innerHTML = document.getElementById("instrument_id").value;
-    title_label.className = "Id 1";
 
-    document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
+    // Make div space for a order...
+    const orderWrap = document.createElement("div");
+    orderWrap.className = 'order-wrap';
+    orderWrap.setAttribute("id", orderData["instrument_id"]);
+
+    const titleLabel = document.createElement("h3");
+    // title_label.innerHTML = document.getElementById("instrument_id").value;
+    titleLabel.className = "order-title";
+
+    const chartWrap = document.createElement("div");
+    chartWrap.setAttribute("class", "order-chart");
+
+    const orderProgress = document.createElement("p");
+    orderProgress.setAttribute("class", "realtime-log");
+
+    orderWrap.appendChild(titleLabel);
+    orderWrap.appendChild(chartWrap);
+    orderWrap.appendChild(orderProgress);
+
+    document.getElementsByClassName("right-col")[0].appendChild(orderWrap);
+    // document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
+
+    let dataHandler = this.dataHandler.bind(orderWrap);
+
+    this.currentOrders.push({
+      "instrument_id": orderData["instrument_id"],
+      "handler": dataHandler
+    });
+
     this._clearForm();
-    
+
   };
 
   
@@ -316,7 +345,7 @@ JPTrader.sendWithSocket = function(orderData){
     this.initWebSocket(sendMessage.bind(this));
   }
   else{
-    sendMessage();
+    sendMessage.call(this);
   }
 
 }
@@ -333,17 +362,36 @@ JPTrader.initWebSocket = function(callback){
       callback();
     };
 
-    this.ws.onmessage = function (evt){ 
+    this.ws.onmessage = function(evt){ 
 
-      var received_msg = evt.data;
+      console.log("in on message");
+      console.log(this);
+
+      let receivedMessage = evt.data;
+      receivedMessage = JSON.parse(receivedMessage);
       // alert("Message is received...");
-      console.log(received_msg);
+      console.log(receivedMessage);
       console.log("message received!");
       
       /* WORK IN PROGRESS */
       /** Recieve different kind of information from server should be done here */
 
-      updateProgress( JSON.parse(received_msg) );
+      // find corresponding handler from current orders array
+      const _currentOrders = JPTrader.currentOrders;
+      console.log('Check _current Orders');
+      console.log(_currentOrders);
+
+      for (let i = 0; i < _currentOrders.length; i++){
+
+        // console.log(_currentOrders[i]["instrument_id"]);
+        // console.log(typeof _currentOrders[i]["instrument_id"]);
+        // console.log(receivedMessage['id']);
+        // console.log(typeof receivedMessage['id']);
+
+        if (_currentOrders[i]["instrument_id"] === receivedMessage["id"].toString()){
+          _currentOrders[i].handler(receivedMessage);
+        }
+      };
 
      };
 
@@ -375,34 +423,48 @@ JPTrader.initWebSocket = function(callback){
 /**********************************************/
 
 
-function dataHandler(d){
+JPTrader.dataHandler = function(d){
+  
+  // this in this function should be a div of order-wrap class
+  console.log('in dataHandler');
   console.log(d);
-  var data_type = d['message_type'];
+
+  var dataType = d['message_type'];
   var timestamp = d['timestamp'];
 
-  if (data_type === "quote"){
-    var quote = d["quote"];
-    this.innerHTML = this.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
+  let p = this.querySelector("p.realtime-log");
+  console.log('Check p:');
+  console.log(p);
 
-  }else if(data_type === "sold_message"){
-    var sold_price = d['sold_price'];
-    var remaining_quantity = d['remaining_quantity'];
-    this.innerHTML = this.innerHTML + "<span>sold price:" + sold_price.toString() + ", Remaining: " + remaining_quantity.toString() + "</span><br>";
+  if (dataType === "quote"){
+    let quote = d["quote"];
+    p.innerHTML = p.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
+
+  }else if(dataType === "sold_message"){
+    const soldPrice = d['sold_price'];
+    const remainingQuantity = d['remaining_quantity'];
+    p.innerHTML = p.innerHTML + "<span>sold price:" + soldPrice.toString() + ", Remaining: " + remainingQuantity.toString() + "</span><br>";
   }
 
-  this.scrollTop = this.scrollHeight;
+  p.scrollTop = p.scrollHeight;
 
 }
 
 
-var updateProgress = dataHandler.bind(document.getElementById("realtime-log"));
+// var updateProgress = dataHandler.bind(document.getElementById("realtime-log"));
 
 
 /**
 A function to setup all the interactions, linkage and connections
 */
 JPTrader.init = function(){
+
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
+  
+  window.onbeforeunload = function(){
+    JPTrader.ws.close();
+  }
+
 };
 
 JPTrader.init();
