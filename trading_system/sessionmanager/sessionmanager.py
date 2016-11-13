@@ -31,7 +31,7 @@ class SessionManager(threading.Thread):
     def removeSession(self, sid):
         del self.session_manager[sid]
 
-    def add_seesion(self, session, sid):
+    def add_seesion(self, sid, session):
         if sid in self.session_manager:
             raise ValueError('Repeated sid')
 
@@ -72,7 +72,7 @@ class SessionManager(threading.Thread):
             return_list = [quote_json]
 
             # remove the termiated session
-            del_sid = [session.session_id for session in session_manager.values() if session.terminate]
+            del_sid = [session.session_id for session in self.session_manager.values() if session.terminate]
             for sid in del_sid:
                 self.removeSession(sid)
             
@@ -145,7 +145,7 @@ class Session_order(object):
                 self.quantity -= order_size
                 
                 sold_message = {
-                        "id": 1,
+                        "id": self.session_id,
                         "message_type": "sold_message",
                         "quote": "",
                         "timestamp": order['timestamp'],
@@ -155,13 +155,13 @@ class Session_order(object):
                         "pnl": self.pnl
                     }
 
-                print("Sold {:,} for ${:,}/share, ${:,} notional".format(order_size, price, notional) )
+                print("ID = {}, Sold {:,} for ${:,}/share, ${:,} notional".format(self.session_id, order_size, price, notional) )
                 print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
 
                 message = sold_message 
             else:
                 unfilled_messagepip = {
-                        "id": 1,
+                        "id": self.session_id,
                         "message_type": "unfilled_order",
                         "quote": "",
                         "timestamp": order['timestamp'],
@@ -171,7 +171,7 @@ class Session_order(object):
                         "pnl": self.pnl 
                     }
 
-                print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
+                # print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
 
                 message = unfilled_message
 
@@ -327,15 +327,11 @@ def ws_message(message):
 
     # start a session
     # init with parameters Quantity, size, time?
-    session = Session( instrument_id, quantity, order_size, order_discount)
-
-    sm.add_seesion(instrument_id, session)
     sm.set_channel(message.reply_channel)
 
+    session = Session_order( instrument_id, quantity, order_size, order_discount)
 
-    # session.trade(message.reply_channel)
-
-    # Reply the instrument_id --> means receive the order successfully
+    sm.add_seesion(instrument_id, session)
     
 
 def update(message):
