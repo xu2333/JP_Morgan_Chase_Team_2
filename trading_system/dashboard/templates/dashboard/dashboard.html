@@ -62,10 +62,10 @@ path.domain{
   <div class='left-col'>
     <h2 class="form-signin-heading">Make order here</h2>
     <div>
-      <div class="form-group">
+<!--       <div class="form-group">
         <label for="stockID">Instrument ID</label>
         <input type="text" class="input-block-level form-control" placeholder="Instrument ID" name="Instrument_id" id="instrument_id">
-      </div>
+      </div> -->
       <div class="form-group">
         <label for="ParentOrder">Total Quantity (Parent Order)</label>
         <input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">
@@ -192,10 +192,188 @@ path.domain{
 // var data = {{apple}}
 {% endautoescape %}
 
-// add index for each element
-// for(var i = 0; i < data.length; i++){
-// 	data[i]['index'] = i;	
-// }
+'use strict';
+
+// Create a name space 
+let JPTrader = {
+  currentOrders  : [],
+  finishedOrders : []
+};
+
+
+/**
+a function that is called by clicking the button
+@param none
+@return
+*/
+JPTrader.makeOrder = function(){
+
+  console.log(this);
+
+  // validate inputs
+  const orderInput = this.validateOrderInput();
+  if(orderInput === null) return;
+  
+  // generate an ID
+  let orderId = this.currentOrders.length + this.finishedOrders.length;
+
+  orderId = orderId.toString();
+  orderInput["instrument_id"] = orderId;
+
+  console.log(orderInput);
+  // send with socket.
+
+  this.sendWithSocket(orderInput);
+
+}
+
+/**
+A function that clear all the content in the form
+Should be used as a call back only after we sent the request...
+@param {None}
+@return {None}
+*/
+JPTrader._clearForm = function(){
+  // document.getElementById("instrument_id").value = "";
+  document.getElementById("quantity").value   = "";
+  document.getElementById("discount").value   = "";
+  document.getElementById("order_size").value = "";
+}
+
+
+/**
+Validate form value, include checking missing data and mal-format data.
+@param non
+@return a json object
+*/
+JPTrader.validateOrderInput = function(){
+
+  // const result = {};
+  const DATA_FIELDS = [/*"instrument_id",*/ "quantity", "order_size", "discount"];
+  var errorMessage = [];
+
+  // Validate Quantity
+  let quantity = parseInt(document.getElementById("quantity").value);
+  if(isNaN(quantity)) errorMessage.push("Your quantity is not a valid number");
+  if(quantity <= 0) errorMessage.push("Your quantity should be a positive number");
+
+  // Validate order size
+  let orderSize = parseInt(document.getElementById("order_size").value);
+  if(isNaN(orderSize)) errorMessage.push("Your order size is not a valid number");
+  if(orderSize <= 0) errorMessage.push("Your order size should be a positive number");
+  if(orderSize > quantity) errorMessage.push("Your child order size is bigger than total quantity");
+
+  // Validate discount
+  let discount = parseInt(document.getElementById("discount").value);
+  if(isNaN(discount)) errorMessage.push("Your discount is not a valid number");
+  if(discount < 0 || discount > 100) errorMessage.push("Your discount should in 0-100");
+
+  if (errorMessage.length > 0) {
+    // Insert the error message some where so the user can see...
+    console.log(errorMessage);
+    return null;
+  }
+  else{
+
+    const result = {
+      "quantity": quantity,
+      "order_size": orderSize,
+      "order_discount": discount
+    };
+
+    return result;
+  }
+
+}
+
+
+/**
+A function that checks the existence of websocket, if not init, init it. Otherwise, use it.
+
+*/
+JPTrader.sendWithSocket = function(orderData){
+
+  console.log(this);
+
+  let sendMessage = function(){
+
+    console.log('Message is sent...');
+    this.ws.send( JSON.stringify( orderData) );
+    
+    // a temp function to add a label into the realtime view for demo use...
+    // need to re-implement in the future...
+    var title_label = document.createElement("h3");
+    // title_label.innerHTML = document.getElementById("instrument_id").value;
+    title_label.className = "Id 1";
+
+    document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
+    this._clearForm();
+    
+  };
+
+  
+  if(typeof this.ws === 'undefined'){
+    this.initWebSocket(sendMessage.bind(this));
+  }
+  else{
+    sendMessage();
+  }
+
+}
+
+
+
+JPTrader.initWebSocket = function(callback){
+
+  if("WebSocket" in window){
+
+    // open a websocket
+    this.ws = new WebSocket("ws://" + window.location.host + "/chat/");
+    this.ws.onopen = function(){
+      callback();
+    };
+
+    this.ws.onmessage = function (evt){ 
+
+      var received_msg = evt.data;
+      // alert("Message is received...");
+      console.log(received_msg);
+      console.log("message received!");
+      
+      /* WORK IN PROGRESS */
+      /** Recieve different kind of information from server should be done here */
+
+      updateProgress( JSON.parse(received_msg) );
+
+     };
+
+     this.ws.onclose = function(){ 
+
+        // websocket is closed.
+        console.log("connection closed");
+     };
+  }
+  else{
+    console.log("websocket is not supported by the browser...");
+    // alert("WebSocket NOT supported by your Browser!");
+  }
+
+
+
+
+}
+
+
+
+
+
+
+
+
+/**********************************************/
+/* Functions that might have to be removed... */
+/**********************************************/
+
 
 function dataHandler(d){
   console.log(d);
@@ -220,106 +398,15 @@ function dataHandler(d){
 var updateProgress = dataHandler.bind(document.getElementById("realtime-log"));
 
 
-function WebSocketTest()
-{
-  if ("WebSocket" in window)
-  {
-     // open a websocket
-     var ws = new WebSocket("ws://" + window.location.host + "/chat/");
-     ws.onopen = function()
-     {
-        // Web Socket is connected, send data using send()
-        ws.send(JSON.stringify({"instrument_id": document.getElementById("instrument_id").value, 
-                                "quantity": document.getElementById("quantity").value, 
-                                "order_discount": document.getElementById("discount").value,
-                                "order_size": document.getElementById("order_size").value
-                                }));
+/**
+A function to setup all the interactions, linkage and connections
+*/
+JPTrader.init = function(){
+  document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
+};
 
-        alert("Message is sent...");
-        
+JPTrader.init();
 
-        // a temp function to add a label into the realtime view for demo use...
-        // need to re-implement in the future...
-
-        var title_label = document.createElement("h3");
-        title_label.innerHTML = document.getElementById("instrument_id").value;
-        title_label.className = "instrument_ids";
-
-        document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
-
-        clearInputForm();
-
-
-     };
-     ws.onmessage = function (evt) 
-     { 
-        var received_msg = evt.data;
-        // alert("Message is received...");
-        console.log(received_msg);
-        console.log("message received!");
-
-        updateProgress( JSON.parse(received_msg) );
-
-     };
-     ws.onclose = function()
-     { 
-        // websocket is closed.
-        // alert("Connection is closed..."); 
-        console.log("connection closed");
-     };
-  }
-  else
-  {
-     // The browser doesn't support WebSocket
-     console.log("websocket is not supported by the browser...");
-     // alert("WebSocket NOT supported by your Browser!");
-  }
-}
-
-
-function clearInputForm(){
-  document.getElementById("instrument_id").value = "";
-  document.getElementById("quantity").value      = "";
-  document.getElementById("discount").value      = "";
-  document.getElementById("order_size").value    = "";
-}
-
-
-
-/************** NOT DONE YET **********************/
-/************** CHI-AN WORKING ********************/
-
-
-
-function collectOrderData(){
-  // a function that returns a json object of 
-  // form data. Check for missing values.
-
-  var result = {};
-  var data_fields = ["instrument_id", "quantity", "discount", "order_size"];
-  var error_message = []
-
-  for (var i = 0; i < data_fields.length; i++) {
-    var value = document.getElementById(data_fields[i]);
-    if (value === "") error_message.push(data_fields[i]);
-    result[data_fields[i]] = value;
-  };
-
-
-  if (error_message.length > 0) {
-    alert(error_message.join(", ") + " are not given in your order!");
-    return null;
-  }
-  else{
-    return result;
-  }
-
-}
-
-
-
-
-document.getElementById("make-order-btn").addEventListener("click", WebSocketTest);
 
 
 

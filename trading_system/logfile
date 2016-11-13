@@ -1,0 +1,29 @@
+LOG:  database system was shut down at 2016-11-13 00:35:06 EST
+LOG:  MultiXact member wraparound protections are now enabled
+LOG:  autovacuum launcher started
+LOG:  database system is ready to accept connections
+FATAL:  role "ase4156_user" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  role "root" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  role "root" does not exist
+FATAL:  role "root" does not exist
+FATAL:  role "postgres" does not exist
+FATAL:  database "wangchi-an" does not exist
+FATAL:  role "root" does not exist
+FATAL:  role "root" does not exist
+ERROR:  syntax error at or near "/" at character 1
+STATEMENT:  /db
+	;
+FATAL:  role "ase4156_user" does not exist
+ERROR:  syntax error at or near "/" at character 25
+STATEMENT:  create database ase4156
+	/dt
+	CREATE DATABASE ase4156;
+ERROR:  syntax error at or near "priviliges" at character 11
+STATEMENT:  grant all priviliges on database ase4156 to ase4156_uesr;
+ERROR:  role "ase4156_uesr" does not exist
+STATEMENT:  grant all privileges on database ase4156 to ase4156_uesr;

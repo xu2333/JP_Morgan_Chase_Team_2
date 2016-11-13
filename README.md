@@ -12,6 +12,46 @@ Another potential Resources: [django-socket.io](http://blog.jupo.org/2011/08/13/
 
 
 
+
+
+
+## Update of Postgresql Database for this project
+In order to launch this project successfully, please make sure that you have **Postgres** installed. You also have to create a db, a user and grant access to it.
+The follow are the code you might need. These are for mac OSX but there shouldn't be much difference except the first part.
+
+
+Start the Database server by using
+```
+1. postgres -D /usr/local/pgsql/data
+or
+2. pg_ctl -D /usr/local/pgsql/data -l logfile start
+```
+
+Launch the psql console
+```
+psql postgres
+```
+
+Generate database and user and grant access
+```
+postgres=# CREATE DATABASE ase4156;
+postgres=# CREATE USER ase4156_user WITH PASSWORD '000000';
+postgres=# grant all privileges on database ase4156 to ase4156_user;
+```
+exit psql console.
+
+Migrate data base 
+```
+python manage.py migrate
+```
+
+
+
+
+
+
+
+
 ```
 
 // Note that the path doesn't matter for routing; any WebSocket
@@ -27,21 +67,6 @@ socket.onopen = function() {
 if (socket.readyState == WebSocket.OPEN) socket.onopen();
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #### Launching our toy jp project
