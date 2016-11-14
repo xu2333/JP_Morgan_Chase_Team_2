@@ -34,7 +34,8 @@ class SessionManager(threading.Thread):
         self.removed_session.append({
             "instrument_id": sid,
             "message_type": remove_type,
-            "remaining_quantity": self.session_manager[sid].quantity
+            "remaining_quantity": self.session_manager[sid].quantity,
+            "pnl": self.session_manager[sid].pnl
             })
 
         del self.session_manager[sid]

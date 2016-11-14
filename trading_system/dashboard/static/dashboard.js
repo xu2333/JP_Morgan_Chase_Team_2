@@ -307,7 +307,7 @@ JPTrader.dataHandler = function( d ){
     const pnl = d["pnl"];
 
     // console.log();
-    tableBody.innerHTML = tableBody.innerHTML + JPTrader._tableRowHelper( soldPrice, remainingQuantity, pnl );
+    tableBody.innerHTML = JPTrader._tableRowHelper( soldPrice, remainingQuantity, pnl ) + tableBody.innerHTML;
 
     // if the order is finished, move the order from currentOrders to finishedOrders
     if ( remainingQuantity === 0 ){
@@ -377,7 +377,7 @@ JPTrader._canceledHandler = function(d){
     // find the div
     const orderWrap = this.orderDOM[canceledId];
     const tableBody = orderWrap.querySelector("tbody.p");
-    tableBody.innerHTML = tableBody.innerHTML + this._tableRowHelper( "Canceled", d["remaining_quantity"] ) ;
+    tableBody.innerHTML = this._tableRowHelper( "Canceled", d["remaining_quantity"], d["pnl"] ) + tableBody.innerHTML;
 
 }
 
