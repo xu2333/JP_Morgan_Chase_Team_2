@@ -18,6 +18,7 @@ class SessionManager(threading.Thread):
         threading.Thread.__init__(self)
 
         self.session_manager = {}
+        self.removed_session = []
         self.channel = None
         self.bid_window = 5
         # Server API URLs
@@ -28,7 +29,14 @@ class SessionManager(threading.Thread):
         if not self.channel:
             self.channel = channel
 
-    def removeSession(self, sid):
+    def removeSession(self, sid, remove_type):
+        
+        self.removed_session.append({
+            "instrument_id": sid,
+            "message_type": remove_type.
+            "remaining_quantity": self.session_manager[sid].quantity
+            })
+
         del self.session_manager[sid]
 
     def add_seesion(self, sid, session):
@@ -45,7 +53,7 @@ class SessionManager(threading.Thread):
         price = float(quote['top_bid']['price'])
         
         quote_message = {
-                "id": 1,
+                "instrument_id": '',
                 "message_type": "quote",
                 "quote": price,
                 "timestamp": quote['timestamp'],
@@ -69,12 +77,12 @@ class SessionManager(threading.Thread):
             # Quote the market
             quote_json, price = self.quote()
 
-            return_list = [quote_json]
-
             # remove the termiated session
             del_sid = [session.session_id for session in self.session_manager.values() if session.terminate]
             for sid in del_sid:
-                self.removeSession(sid)
+                self.removeSession(sid, 'finished_order')
+
+            return_list = self.removed_session + [quote_json]
             
             # For each order
             if self.session_manager:
@@ -88,7 +96,7 @@ class SessionManager(threading.Thread):
                 "text": json.dumps(return_list)
             })
 
-class Session_order(object):
+class Session(object):
     def __init__(self, session_id, quantity, order_size, order_discount):
         self.session_id = session_id
         self.quantity = quantity
@@ -145,7 +153,7 @@ class Session_order(object):
                 self.quantity -= order_size
                 
                 sold_message = {
-                        "id": self.session_id,
+                        "instrument_id": self.session_id,
                         "message_type": "sold_message",
                         "quote": "",
                         "timestamp": order['timestamp'],
@@ -161,7 +169,7 @@ class Session_order(object):
                 message = sold_message 
             else:
                 unfilled_messagepip = {
-                        "id": self.session_id,
+                        "instrument_id": self.session_id,
                         "message_type": "unfilled_order",
                         "quote": "",
                         "timestamp": order['timestamp'],
@@ -315,27 +323,34 @@ def ws_message(message):
 
     content = json.loads(message.content['text'])
     print(content)
-    # print(content.text)
 
-    instrument_id = content['instrument_id']
-    quantity = int(content['quantity'])
-    order_size = int(content['order_size'])
-    order_discount = int(content['order_discount'])
-
-    print("order size: {}".format(order_size))
-    print("quantity: {}".format(quantity))
-    print("order_discount: {}".format(order_discount))
-
-    # start a session
-    # init with parameters Quantity, size, time?
-    sm.set_channel(message.reply_channel)
-
-    session = Session_order( instrument_id, quantity, order_size, order_discount)
-
-    sm.add_seesion(instrument_id, session)
+    if content['request_type'] == 'order_request':
     
+        instrument_id = content['instrument_id']
+        quantity = int(content['quantity'])
+        order_size = int(content['order_size'])
+        order_discount = int(content['order_discount'])
 
-def update(message):
-    message.reply_channel.send({
-        "text": "quoted at ...\n",
-})
+        print("order size: {}".format(order_size))
+        print("quantity: {}".format(quantity))
+        print("order_discount: {}".format(order_discount))
+
+        # start a session
+        # init with parameters Quantity, size, time?
+        sm.set_channel(message.reply_channel)
+
+        session = Session( instrument_id, quantity, order_size, order_discount)
+
+        sm.add_seesion(instrument_id, session)
+    
+    elif content['request_type'] == 'cancel_request':
+
+        instrument_id = content['instrument_id']
+
+        sm.removeSession(instrument_id, 'canceled_order')
+
+
+# Start SessionManager
+sm = SessionManager()
+sm.start()
+
