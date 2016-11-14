@@ -6,6 +6,7 @@ let JPTrader = {
   // and a method binded on the corresponding div 
   currentOrders  : [],
   finishedOrders : [],
+  canceledOrders  : [],
   quoteData:[]
 };
 
@@ -23,7 +24,7 @@ JPTrader.makeOrder = function(){
   if ( orderInput === null ) return;
   
   // generate an ID
-  let orderId = this.currentOrders.length + this.finishedOrders.length;
+  let orderId = this.currentOrders.length + this.finishedOrders.length + this.canceledOrders.length;
 
   orderId = orderId.toString();
   orderInput["instrument_id"] = orderId;
@@ -226,6 +227,7 @@ JPTrader.initWebSocket = function( callback ){
 
           case "canceled_order":
             console.log('Received an canceled confirmation message from server');
+            JPTrader._canceledHandler(message);
 
             break
 
@@ -295,27 +297,35 @@ JPTrader.dataHandler = function( d ){
 }
 
 
-JPTrader._dataHandler = {
+JPTrader._canceledHandler = function(d){
+    const canceledId = d['instrument_id'];
+    console.log('in canceled handler');
 
-  quoteHandler: function(d){
+    // move it from current order to canceledOrder
+    const indexToRemove = this.currentOrders.findIndex(function(ele){
+      return ele['instrument_id'] === canceledId;
+    });
 
-  },
+    try {
 
-  soldHandler: function(d){
+      var objectToMove = this.currentOrders.splice(indexToRemove, 1);
+      console.log(objectToMove);
+
+      if ( objectToMove.length > 0 ){
+        this.canceledOrders.push(objectToMove);  
+      }
+      
+
+    } catch(e) {
+      // statements
+      console.log(e);
+      console.log("don't know what happened...");
+
+    }
     
-  },
+    // update ui 
 
-  cancelHandler: function(d){
 
-  },
-
-  finishHandler: function(d){
-
-  },
-
-  unfilledHandler: function(d){
-
-  }
 }
 
 

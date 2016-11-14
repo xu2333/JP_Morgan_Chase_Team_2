@@ -83,6 +83,8 @@ class SessionManager(threading.Thread):
                 self.removeSession(sid, 'finished_order')
 
             return_list = self.removed_session + [quote_json]
+
+            print(return_list)
             
             # For each order
             if self.session_manager:
@@ -91,6 +93,8 @@ class SessionManager(threading.Thread):
 
                     if order_json:
                         return_list.append(order_json)
+
+            print(return_list)
 
             self.channel.send({
                 "text": json.dumps(return_list)
