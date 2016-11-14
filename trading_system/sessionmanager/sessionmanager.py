@@ -96,6 +96,9 @@ class SessionManager(threading.Thread):
                 "text": json.dumps(return_list)
             })
 
+            # Empty the removed session list
+            del self.removed_session[:]
+
 class Session(object):
     def __init__(self, session_id, quantity, order_size, order_discount):
         self.session_id = session_id
