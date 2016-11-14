@@ -45,7 +45,7 @@ class SessionManager(threading.Thread):
         price = float(quote['top_bid']['price'])
         
         quote_message = {
-                "id": 1,
+                "id": '',
                 "message_type": "quote",
                 "quote": price,
                 "timestamp": quote['timestamp'],
