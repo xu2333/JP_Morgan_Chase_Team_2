@@ -27,3 +27,7 @@ ERROR:  syntax error at or near "priviliges" at character 11
 STATEMENT:  grant all priviliges on database ase4156 to ase4156_uesr;
 ERROR:  role "ase4156_uesr" does not exist
 STATEMENT:  grant all privileges on database ase4156 to ase4156_uesr;
+LOG:  autovacuum launcher shutting down
+LOG:  received smart shutdown request
+LOG:  shutting down
+LOG:  database system is shut down

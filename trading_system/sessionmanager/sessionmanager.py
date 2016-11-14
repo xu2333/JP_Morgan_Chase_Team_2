@@ -101,7 +101,7 @@ class Session(object):
 				self.quantity -= self.order_size
 				
 				sold_message = {
-						"id": 1,
+						"id": self.session_id,
 						"message_type": "sold_message",
 						"quote": "",
 						"timestamp": order['timestamp'],

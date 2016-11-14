@@ -5,7 +5,8 @@ let JPTrader = {
   // current orders array saves an object in each element with one attribute id 
   // and a method binded on the corresponding div 
   currentOrders  : [],
-  finishedOrders : []
+  finishedOrders : [],
+  quoteData:[]
 };
 
 
@@ -15,11 +16,11 @@ a function that is called by clicking the button
 */
 JPTrader.makeOrder = function(){
 
-  console.log(this);
+  console.log( this );
 
   // validate inputs
   const orderInput = this.validateOrderInput();
-  if(orderInput === null) return;
+  if ( orderInput === null ) return;
   
   // generate an ID
   let orderId = this.currentOrders.length + this.finishedOrders.length;
@@ -30,7 +31,7 @@ JPTrader.makeOrder = function(){
   console.log(orderInput);
 
   // send with socket.
-  this.sendWithSocket(orderInput);
+  this.sendWithSocket( orderInput );
 
 }
 
@@ -55,30 +56,29 @@ JPTrader.validateOrderInput = function(){
 
   // const result = {};
   const DATA_FIELDS = [/*"instrument_id",*/ "quantity", "order_size", "discount"];
-  var errorMessage = [];
+  const errorMessage = [];
 
   // Validate Quantity
   let quantity = parseInt(document.getElementById("quantity").value);
-  if(isNaN(quantity)) errorMessage.push("Your quantity is not a valid number");
-  if(quantity <= 0) errorMessage.push("Your quantity should be a positive number");
+  if ( isNaN(quantity) ) errorMessage.push("Your quantity is not a valid number");
+  if ( quantity <= 0 ) errorMessage.push("Your quantity should be a positive number");
 
   // Validate order size
   let orderSize = parseInt(document.getElementById("order_size").value);
-  if(isNaN(orderSize)) errorMessage.push("Your order size is not a valid number");
-  if(orderSize <= 0) errorMessage.push("Your order size should be a positive number");
-  if(orderSize > quantity) errorMessage.push("Your child order size is bigger than total quantity");
+  if ( isNaN(orderSize) ) errorMessage.push("Your order size is not a valid number");
+  if ( orderSize <= 0 ) errorMessage.push("Your order size should be a positive number");
+  if ( orderSize > quantity ) errorMessage.push("Your child order size is bigger than total quantity");
 
   // Validate discount
   let discount = parseInt(document.getElementById("discount").value);
-  if(isNaN(discount)) errorMessage.push("Your discount is not a valid number");
-  if(discount < 0 || discount > 100) errorMessage.push("Your discount should in 0-100");
+  if ( isNaN(discount) ) errorMessage.push("Your discount is not a valid number");
+  if ( discount < 0 || discount > 100 ) errorMessage.push("Your discount should in 0-100");
 
-  if (errorMessage.length > 0) {
+  if ( errorMessage.length > 0 ) {
     // Insert the error message some where so the user can see...
     console.log(errorMessage);
     return null;
-  }
-  else{
+  } else {
 
     const result = {
       "quantity": quantity,
@@ -97,7 +97,7 @@ A function that checks the existence of websocket, if not init, init it. Otherwi
 @param {None}
 @return {undefined}
 */
-JPTrader.sendWithSocket = function(orderData){
+JPTrader.sendWithSocket = function( orderData ){
 
   let sendMessageAndDisplayOrder = function(){
 
@@ -119,11 +119,11 @@ JPTrader.sendWithSocket = function(orderData){
     const orderProgress = document.createElement("p");
     orderProgress.setAttribute("class", "realtime-log");
 
-    orderWrap.appendChild(titleLabel);
-    orderWrap.appendChild(chartWrap);
-    orderWrap.appendChild(orderProgress);
+    orderWrap.appendChild( titleLabel );
+    orderWrap.appendChild( chartWrap );
+    orderWrap.appendChild( orderProgress );
 
-    document.getElementsByClassName("right-col")[0].appendChild(orderWrap);
+    document.getElementsByClassName("right-col")[0].appendChild( orderWrap );
     // document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
 
     let dataHandler = this.dataHandler.bind(orderWrap);
@@ -137,11 +137,10 @@ JPTrader.sendWithSocket = function(orderData){
 
   };
 
-  if(typeof this.ws === 'undefined'){
-    this.initWebSocket(sendMessageAndDisplayOrder.bind(this));
-  }
-  else{
-    sendMessageAndDisplayOrder.call(this);
+  if ( typeof this.ws === 'undefined' ){
+    this.initWebSocket(sendMessageAndDisplayOrder.bind( this ));
+  } else {
+    sendMessageAndDisplayOrder.call( this );
   }
 
 }
@@ -152,9 +151,9 @@ Will be called if the socket is not initialized
 @param {function} callback - a callback function that sends the order to the server 
 @return {undefined}
 */
-JPTrader.initWebSocket = function(callback){
+JPTrader.initWebSocket = function( callback ){
 
-  if("WebSocket" in window){
+  if ( "WebSocket" in window ){
 
     // open a websocket
     this.ws = new WebSocket("ws://" + window.location.host + "/chat/");
@@ -162,26 +161,57 @@ JPTrader.initWebSocket = function(callback){
       callback();
     };
 
-    this.ws.onmessage = function(evt){ 
+    this.ws.onmessage = function( evt ){ 
 
       let receivedMessage = evt.data;
-      receivedMessage = JSON.parse(receivedMessage);
-      // alert("Message is received...");
+      receivedMessage = JSON.parse( receivedMessage );
+      console.log(r eceivedMessage );
 
+      /********************/
       /* WORK IN PROGRESS */
+      /********************/
       /** Recieve different kind of information from server should be done here */
+
+      /*
+      receivedMessage.forEach(function(message){
+
+        const messageType = message['message_type'];
+
+        switch (messageType) {
+          case "quote":
+            // statements_1
+            console.log('Received a quote from server');
+            break;
+
+          case "order":
+            console.log('Received an order from server');
+
+            // find corresponding handler from current orders array
+            const _currentOrders = JPTrader.currentOrders;
+
+            for (let i = 0; i < _currentOrders.length; i++){
+              if (_currentOrders[i]["instrument_id"] === message["id"].toString()){
+                _currentOrders[i].handler(message);
+              }
+            };
+
+            break;
+
+          default:
+            console.log('data type not specified or not recognized');
+            break;
+        }
+
+      });
+      */
+
+
 
       // find corresponding handler from current orders array
       const _currentOrders = JPTrader.currentOrders;
 
-      for (let i = 0; i < _currentOrders.length; i++){
-
-        // console.log(_currentOrders[i]["instrument_id"]);
-        // console.log(typeof _currentOrders[i]["instrument_id"]);
-        // console.log(receivedMessage['id']);
-        // console.log(typeof receivedMessage['id']);
-
-        if (_currentOrders[i]["instrument_id"] === receivedMessage["id"].toString()){
+      for ( let i = 0; i < _currentOrders.length; i++ ){
+        if ( _currentOrders[i]["instrument_id"] === receivedMessage["id"].toString() ){
           _currentOrders[i].handler(receivedMessage);
         }
       };
@@ -193,8 +223,7 @@ JPTrader.initWebSocket = function(callback){
         // websocket is closed.
         console.log("connection closed");
      };
-  }
-  else{
+  } else {
     console.log("websocket is not supported by the browser...");
     // alert("WebSocket NOT supported by your Browser!");
   }
@@ -207,22 +236,33 @@ div tag, and saved in the currentOrder array.
 @param {JSON} d - a json data responded from the server
 @return {undefined}
 */
-JPTrader.dataHandler = function(d){
+JPTrader.dataHandler = function( d ){
   
   // this in this function should be a div of order-wrap class
-  var dataType = d['message_type'];
-  var timestamp = d['timestamp'];
+  let dataType = d['message_type'];
+  let timestamp = d['timestamp'];
 
   let p = this.querySelector("p.realtime-log");
 
-  if (dataType === "quote"){
+  console.log('dataType:' + dataType );
+
+  if ( dataType === "quote" ){
     let quote = d["quote"];
     p.innerHTML = p.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
+    this.quoteData.push(quote);
 
-  }else if(dataType === "sold_message"){
-    const soldPrice = d['sold_price'];
-    const remainingQuantity = d['remaining_quantity'];
+  } else if ( dataType === "sold_message" ){
+    let soldPrice = d['sold_price'];
+    let remainingQuantity = d['remaining_quantity'];
+    const pnl = d["pnl"];
     p.innerHTML = p.innerHTML + "<span>sold price:" + soldPrice.toString() + ", Remaining: " + remainingQuantity.toString() + "</span><br>";
+
+    // if the order is finished, move the order from currentOrders to finishedOrders
+    if ( remainingQuantity === 0 ){
+      
+    }
+
+
   }
 
   p.scrollTop = p.scrollHeight;
@@ -231,6 +271,7 @@ JPTrader.dataHandler = function(d){
 
 /**
 A function to setup all the interactions, linkage and connections
+@return {undefined}
 */
 JPTrader.init = function(){
 

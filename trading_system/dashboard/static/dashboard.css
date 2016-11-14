@@ -1,0 +1,39 @@
+.left-col{
+  float: left;
+  width: 20%;
+  max-width: 430px;
+}
+
+.right-col{
+  float: left;
+  width: 80%;
+  height: 400px;
+}
+
+.line {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.x.axis line {
+  shape-rendering: auto;
+}
+
+path.domain{
+  /*stroke-width: 1.5px;*/
+  fill: none;
+  shape-rendering: crispEdges;
+}
+
+
+#realtime-log{
+  margin-top: 20px;
+  margin-left: 65px;
+  height: 100px;
+  overflow: scroll;
+}
+
+.instrument_ids{
+  margin-left: 78px;
+}

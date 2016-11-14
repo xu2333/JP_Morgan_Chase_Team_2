@@ -6,50 +6,12 @@
 <body>
 
 
+
+
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<style type="text/css">
-.left-col{
-  float: left;
-  width: 20%;
-  max-width: 430px;
-}
 
-.right-col{
-  float: left;
-  width: 80%;
-  height: 400px;
-}
-
-.line {
-  fill: none;
-  stroke: #000;
-  stroke-width: 1.5px;
-}
-
-.x.axis line {
-  shape-rendering: auto;
-}
-
-path.domain{
-  /*stroke-width: 1.5px;*/
-  fill: none;
-  shape-rendering: crispEdges;
-}
-
-
-#realtime-log{
-  margin-top: 20px;
-  margin-left: 65px;
-  height: 100px;
-  overflow: scroll;
-}
-
-.instrument_ids{
-  margin-left: 78px;
-}
-
-
-</style>
 
 <script src="https://d3js.org/d3.v3.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
@@ -62,10 +24,6 @@ path.domain{
   <div class='left-col'>
     <h2 class="form-signin-heading">Make order here</h2>
     <div>
-<!--       <div class="form-group">
-        <label for="stockID">Instrument ID</label>
-        <input type="text" class="input-block-level form-control" placeholder="Instrument ID" name="Instrument_id" id="instrument_id">
-      </div> -->
       <div class="form-group">
         <label for="ParentOrder">Total Quantity (Parent Order)</label>
         <input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">
@@ -82,6 +40,8 @@ path.domain{
 
     <!-- <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button> -->
     <button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>
+  
+    <div id="input-error-message"></div>
   </div>
 
   <div class="right-col">
@@ -184,7 +144,7 @@ path.domain{
 
 </div>
 
-{% load static %}
+
 <script type="text/javascript" src="{% static 'dashboard.js' %}"></script>
 <script type="text/javascript">
 	
