@@ -33,7 +33,7 @@ class SessionManager(threading.Thread):
         
         self.removed_session.append({
             "instrument_id": sid,
-            "message_type": remove_type.
+            "message_type": remove_type,
             "remaining_quantity": self.session_manager[sid].quantity
             })
 
@@ -184,130 +184,6 @@ class Session(object):
                 message = unfilled_message
 
         return message
-
-
-class Session(object):
-
-    def __init__(self, session_id, quantity, order_size, order_discount):
-        self.session_id = session_id
-        self.quantity = quantity
-        self.order_size = order_size
-        self.order_discount = order_discount
-
-        # a value to return at the end of trade function
-        self.pnl = 0
-
-        # the time to break between each bid attempt
-        self.bid_window = 5
-
-        # a paramter to terminate trading when the orders aren't complete yet
-        self.terminate = False
-
-    def trade(self, channel):
-        '''
-        in: a socket channel to pipeline data to users client interface
-
-        a function that keeps talking to the market until 
-        1. quantity of this session is done
-        2. the terminate is set to true
-        '''
-
-        # Server API URLs
-        QUERY = "http://localhost:8080/query?id={}"
-        ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
-
-        quotes = []
-        sells = []
-
-        while not self.terminate and self.quantity > 0:
-
-            # talk to market
-            for _ in range(self.bid_window):
-                time.sleep(1)
-                response = request.urlopen(QUERY.format(random.random())).read()
-                # print("{}".format(response.decode("utf-8")) )
-                quote = json.loads(response.decode("utf-8"))
-                price = float(quote['top_bid']['price'])
-                
-                quote_message = {
-                        "id": self.session_id,
-                        "message_type": "quote",
-                        "quote": price,
-                        "timestamp": quote['timestamp'],
-                        
-                        "remaining_quantity": self.quantity,
-                        "sold_quantity": "",
-                        "sold_price": "",
-                        "pnl": self.pnl
-                    }
-
-                # print(quote)
-                channel.send({
-                    "text": json.dumps(quote_message)
-                })
-
-                quotes.append(quote_message)
-
-            # Attempt to execute a sell order. By only referencing the last price we retrieved
-            order_args = (self.order_size, price - self.order_discount)
-            selling_message = "Executing 'sell' of {:,} @ {:,}".format(*order_args)
-            # channel.send({
-            #   "text":{
-            #       "selling_message": selling_message
-            #   }
-            # })
-            url   = ORDER.format(random.random(), *order_args)
-            order = json.loads(request.urlopen(url).read().decode("utf-8"))
-
-            # Update the PnL if the order was filled.
-            if order['avg_price'] > 0:
-                price    = order['avg_price']
-                notional = float(price * self.order_size)
-                self.pnl += notional
-                self.quantity -= self.order_size
-                
-                sold_message = {
-                        "id": 1,
-                        "message_type": "sold_message",
-                        "quote": "",
-                        "timestamp": order['timestamp'],
-                        "remaining_quantity": self.quantity,
-                        "sold_quantity": self.order_size,
-                        "sold_price": price,
-                        "pnl": self.pnl
-                    }
-
-                sells.append(json.dumps(sold_message))
-                channel.send({
-                    "text": json.dumps(sold_message)
-                })
-
-                print("Sold {:,} for ${:,}/share, ${:,} notional".format(self.order_size, price, notional) )
-                print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
-
-            else:
-
-                unfilled_messagepip = {
-                        "id": 1,
-                        "message_type": "unfilled_order",
-                        "quote": "",
-                        "timestamp": order['timestamp'],
-                        "remaining_quantity": self.quantity,
-                        "sold_quantity": "",
-                        "sold_price": "",
-                        "pnl": self.pnl 
-                    }
-
-                channel.send({
-                    "text": json.dumps(unfilled_message)
-                })
-
-                print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
-
-            time.sleep(1)
-
-sm = SessionManager()
-sm.start()
 
 def ws_message(message):
     # ASGI WebSocket packet-received and send-packet message types
