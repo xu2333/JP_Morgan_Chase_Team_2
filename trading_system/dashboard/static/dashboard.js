@@ -7,7 +7,8 @@ let JPTrader = {
   currentOrders  : [],
   finishedOrders : [],
   canceledOrders  : [],
-  quoteData:[]
+  quoteData:[],
+  orderDOM: []
 };
 
 
@@ -141,16 +142,31 @@ JPTrader.sendWithSocket = function( orderData ){
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
 
+    /* DEPRECATED
     const orderProgress = document.createElement("p");
     orderProgress.setAttribute("class", "realtime-log");
+    */
+
+    const progressTable = document.createElement("table");
+    progressTable.setAttribute("class", "table");
+
+    const tableHeader = document.createElement("thead");
+    tableHeader.innerHTML = "<tr><td>Sold Price</td><td>Remaining</td><td>PnL</td></tr>";
+    progressTable.appendChild(tableHeader);
+
+    const tableBody = document.createElement("tbody");
+    tableBody.setAttribute("class", "p");
+    progressTable.appendChild(tableBody);
 
     orderWrap.appendChild( titleLabel );
     orderWrap.appendChild( chartWrap );
     orderWrap.appendChild( cancelButton );
-    orderWrap.appendChild( orderProgress );
+    // orderWrap.appendChild( orderProgress );
+    orderWrap.appendChild( progressTable );
 
     document.getElementsByClassName("right-col")[0].appendChild( orderWrap );
     // document.getElementsByClassName("right-col")[0].insertBefore(title_label, document.getElementById("test-chart"));
+
 
     let dataHandler = this.dataHandler.bind(orderWrap);
 
@@ -158,6 +174,8 @@ JPTrader.sendWithSocket = function( orderData ){
       "instrument_id": orderData["instrument_id"],
       "handler": dataHandler
     });
+
+    this.orderDOM.push(orderWrap);
 
     this._clearForm();
 
@@ -269,37 +287,67 @@ JPTrader.dataHandler = function( d ){
   let dataType = d['message_type'];
   let timestamp = d['timestamp'];
 
-  let p = this.querySelector("p.realtime-log");
+
+  // select the table to insert rows on data update
+  // let p = this.querySelector("p.realtime-log");
+  let tableBody = this.querySelector("tbody.p");
 
   console.log('dataType:' + dataType );
 
   if ( dataType === "quote" ){
+
+    // code doesn't come here...
     let quote = d["quote"];
-    p.innerHTML = p.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
+    tableBody.innerHTML = tableBody.innerHTML + "<span>quote:" + quote.toString() + "</span><br>";
     this.quoteData.push(quote);
 
   } else if ( dataType === "sold_message" ){
     let soldPrice = d['sold_price'];
     let remainingQuantity = d['remaining_quantity'];
     const pnl = d["pnl"];
-    p.innerHTML = p.innerHTML + "<span>sold price:" + soldPrice.toString() + ", Remaining: " + remainingQuantity.toString() + "</span><br>";
+
+    // console.log();
+    tableBody.innerHTML = tableBody.innerHTML + JPTrader._tableRowHelper( soldPrice, remainingQuantity, pnl );
 
     // if the order is finished, move the order from currentOrders to finishedOrders
     if ( remainingQuantity === 0 ){
-      
-    }
 
+      /****************************/
+      /***** WORK IN PROGRESS *****/
+      /****************************/      
+    
+    }
 
   }
 
+  /* DEPRECATED
   p.scrollTop = p.scrollHeight;
+  */
+}
+
+JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
+
+  if (+remaining === 0){
+    return `<tr class="success"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
+  }
+  if (soldPrice === "Canceled"){
+    return `<tr class="danger"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
+  }
+  return `<tr><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
 
 }
 
 
+/**
+One of the data handler that works specifically for ack of canceled orders. 
+Moves the order into canceledOrder array of JPTrader and update the ui for that specific order.
+@param {JSON} d - a json object return from the server
+@return {undefined}
+*/
+
 JPTrader._canceledHandler = function(d){
-    const canceledId = d['instrument_id'];
-    console.log('in canceled handler');
+
+    const canceledId = +d['instrument_id'];
 
     // move it from current order to canceledOrder
     const indexToRemove = this.currentOrders.findIndex(function(ele){
@@ -309,7 +357,6 @@ JPTrader._canceledHandler = function(d){
     try {
 
       var objectToMove = this.currentOrders.splice(indexToRemove, 1);
-      console.log(objectToMove);
 
       if ( objectToMove.length > 0 ){
         this.canceledOrders.push(objectToMove);  
@@ -322,9 +369,15 @@ JPTrader._canceledHandler = function(d){
       console.log("don't know what happened...");
 
     }
-    
-    // update ui 
 
+    /****************************/
+    /***** WORK IN PROGRESS *****/
+    /****************************/
+    // update ui 
+    // find the div
+    const orderWrap = this.orderDOM[canceledId];
+    const tableBody = orderWrap.querySelector("tbody.p");
+    tableBody.innerHTML = tableBody.innerHTML + this._tableRowHelper( "Canceled", d["remaining_quantity"] ) ;
 
 }
 
