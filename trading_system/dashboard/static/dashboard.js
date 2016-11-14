@@ -27,6 +27,7 @@ JPTrader.makeOrder = function(){
 
   orderId = orderId.toString();
   orderInput["instrument_id"] = orderId;
+  orderInput["request_type"] = "order_request";
 
   console.log(orderInput);
 
@@ -113,6 +114,29 @@ JPTrader.sendWithSocket = function( orderData ){
     // title_label.innerHTML = document.getElementById("instrument_id").value;
     titleLabel.className = "order-title";
 
+    const cancelButton = document.createElement("button");
+    cancelButton.innerHTML = "Cancel Order";
+    cancelButton.classList.add("cancel-button");
+    cancelButton.classList.add("btn");
+    cancelButton.classList.add("btn-danger");
+
+    let cancel = function(){
+      
+      console.log('in cancel');
+      console.log(this);
+      console.log(orderData["instrument_id"]);
+
+      const cancelRequest = {
+        "request_type": "cancel_request",
+        "instrument_id": orderData["instrument_id"]
+      };
+
+      this.ws.send(JSON.stringify(cancelRequest));
+
+    }
+
+    cancelButton.addEventListener("click", cancel.bind(this));
+
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
 
@@ -121,6 +145,7 @@ JPTrader.sendWithSocket = function( orderData ){
 
     orderWrap.appendChild( titleLabel );
     orderWrap.appendChild( chartWrap );
+    orderWrap.appendChild( cancelButton );
     orderWrap.appendChild( orderProgress );
 
     document.getElementsByClassName("right-col")[0].appendChild( orderWrap );
@@ -165,14 +190,13 @@ JPTrader.initWebSocket = function( callback ){
 
       let receivedMessage = evt.data;
       receivedMessage = JSON.parse( receivedMessage );
-      console.log(r eceivedMessage );
+      console.log( receivedMessage );
 
       /********************/
       /* WORK IN PROGRESS */
       /********************/
       /** Recieve different kind of information from server should be done here */
 
-      /*
       receivedMessage.forEach(function(message){
 
         const messageType = message['message_type'];
@@ -183,38 +207,38 @@ JPTrader.initWebSocket = function( callback ){
             console.log('Received a quote from server');
             break;
 
-          case "order":
+          case "sold_message":
             console.log('Received an order from server');
-
             // find corresponding handler from current orders array
             const _currentOrders = JPTrader.currentOrders;
 
             for (let i = 0; i < _currentOrders.length; i++){
-              if (_currentOrders[i]["instrument_id"] === message["id"].toString()){
+              if (_currentOrders[i]["instrument_id"] === message["instrument_id"].toString()){
                 _currentOrders[i].handler(message);
               }
             };
+            break;
 
+          case "unfilled_order":
+            console.log('Received an unfilled message from server');
+            
+            break;
+
+          case "canceled_order":
+            console.log('Received an canceled confirmation message from server');
+
+            break
+
+          case "finished_order":
+            console.log('Received an finished message from server');
             break;
 
           default:
-            console.log('data type not specified or not recognized');
+            console.log('Data type not specified or not recognized');
             break;
         }
 
       });
-      */
-
-
-
-      // find corresponding handler from current orders array
-      const _currentOrders = JPTrader.currentOrders;
-
-      for ( let i = 0; i < _currentOrders.length; i++ ){
-        if ( _currentOrders[i]["instrument_id"] === receivedMessage["id"].toString() ){
-          _currentOrders[i].handler(receivedMessage);
-        }
-      };
 
      };
 
@@ -222,6 +246,7 @@ JPTrader.initWebSocket = function( callback ){
 
         // websocket is closed.
         console.log("connection closed");
+
      };
   } else {
     console.log("websocket is not supported by the browser...");
@@ -268,6 +293,32 @@ JPTrader.dataHandler = function( d ){
   p.scrollTop = p.scrollHeight;
 
 }
+
+
+JPTrader._dataHandler = {
+
+  quoteHandler: function(d){
+
+  },
+
+  soldHandler: function(d){
+    
+  },
+
+  cancelHandler: function(d){
+
+  },
+
+  finishHandler: function(d){
+
+  },
+
+  unfilledHandler: function(d){
+
+  }
+}
+
+
 
 /**
 A function to setup all the interactions, linkage and connections

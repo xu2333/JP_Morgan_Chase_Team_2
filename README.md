@@ -11,6 +11,12 @@ Another potential Resources: [django-socket.io](http://blog.jupo.org/2011/08/13/
 
 
 
+## Communication between client and server
+This application uses socket to send message between the client side(trader) and the server side that manages multiple order requests. Data are sent by using JSON format.
+
+
+
+
 
 
 
