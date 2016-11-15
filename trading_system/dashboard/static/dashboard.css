@@ -4,10 +4,24 @@
   max-width: 430px;
 }
 
+
+#input-error-message{
+  color: red;
+}
+
 .right-col{
   float: left;
   width: 80%;
   height: 400px;
+}
+
+div.order-wrap{
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #d3d3d3;
+
 }
 
 .line {

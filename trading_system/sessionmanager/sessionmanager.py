@@ -235,6 +235,8 @@ def ws_message(message):
 
 
 # Start SessionManager
+
+print("When did you do this?????")
 sm = SessionManager()
 sm.start()
 
