@@ -42,7 +42,7 @@ class SessionManagerTester(TestCase):
     def test_remove_session(self):
         sid = 0
 
-        self.removeSession(sid, 'canceled')
+        self.sm.removeSession(sid, 'canceled')
         
         self.assertEqual(len(self.sm.session_manager), 0)
         self.assertEqual(len(self.sm.removed_session), 1)
