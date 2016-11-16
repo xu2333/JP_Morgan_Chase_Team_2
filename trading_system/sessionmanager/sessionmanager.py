@@ -25,6 +25,9 @@ class SessionManager(threading.Thread):
         self.QUERY = "http://localhost:8080/query?id={}"
         self.ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
 
+        # toggle to stop the trading thread
+        self.stop_flag = False
+
     def set_channel(self, channel):
         if not self.channel:
             self.channel = channel
@@ -40,7 +43,7 @@ class SessionManager(threading.Thread):
 
         del self.session_manager[sid]
 
-    def add_seesion(self, sid, session):
+    def add_session(self, sid, session):
         if sid in self.session_manager:
             raise ValueError('Repeated sid')
 
@@ -66,10 +69,17 @@ class SessionManager(threading.Thread):
             }
 
         return quote_message, price
-        
+
+    def stop_trade_thread(self):
+        self.stop_flag = False
 
     def run(self):
+        self.stop_flag = True
+
         while True:
+            if self.stop_flag:
+                break
+
             # Pass by 1 second
             time.sleep(1)
             if not self.channel:
@@ -84,8 +94,6 @@ class SessionManager(threading.Thread):
                 self.removeSession(sid, 'finished_order')
 
             return_list = self.removed_session + [quote_json]
-
-            print(return_list)
             
             # For each order
             if self.session_manager:
@@ -95,8 +103,7 @@ class SessionManager(threading.Thread):
                     if order_json:
                         return_list.append(order_json)
 
-            print(return_list)
-
+            # Send the combined order execution list
             self.channel.send({
                 "text": json.dumps(return_list)
             })
@@ -225,7 +232,7 @@ def ws_message(message):
 
         session = Session( instrument_id, quantity, order_size, order_discount)
 
-        sm.add_seesion(instrument_id, session)
+        sm.add_session(instrument_id, session)
     
     elif content['request_type'] == 'cancel_request':
 
@@ -235,8 +242,6 @@ def ws_message(message):
 
 
 # Start SessionManager
-
-print("When did you do this?????")
 sm = SessionManager()
 sm.start()
 

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from sessionmanager import SessionManager, Session
+from sessionmanager.sessionmanager import SessionManager, Session
 
 # Create your tests here.
 class StaticAnalysis(TestCase):
@@ -15,8 +15,12 @@ class ViewsTester(TestCase):
 
 class SessionManagerTester(TestCase):
 
-    def setup(self):
+    def setUp(self):
         self.sm = SessionManager()
+        self.sm.start()
+
+    def tearDown(self):
+        self.sm.stop_trade_thread()
 
     def test_add_session(self):
         instrument_id = 0
@@ -28,21 +32,35 @@ class SessionManagerTester(TestCase):
         
         self.sm.add_session(instrument_id, s)
 
+        # Successfully insert a session
         self.assertEqual(len(self.sm.session_manager), 1)
-        self.assertEqual(len(self.sm.session_manager), 1)
+
+        # Raise exception for repeated session
+        with self.assertRaises(ValueError):
+            self.sm.add_session(instrument_id, s)
 
     def test_remove_session(self):
-        pass
+        sid = 0
+
+        self.removeSession(sid, 'canceled')
+        
+        self.assertEqual(len(self.sm.session_manager), 0)
+        self.assertEqual(len(self.sm.removed_session), 1)
 
     def test_quote(self):
-        pass
+        quote_json, price = self.sm.quote()
+
+        self.assertEqual(0, 0)
 
 class SessionTester(TestCase):
 
-    def test_trade(self):
-        instrument_id = 0
-        quantity = 100
-        order_size = 10
-        order_discount = 5
+    # def test_trade(self):
+    #     instrument_id = 0
+    #     quantity = 100
+    #     order_size = 10
+    #     order_discount = 5
 
-        self.s = Session(instrument_id, quantity, order_size, order_discount)
+    #     self.s = Session(instrument_id, quantity, order_size, order_discount)
+
+    pass
+
