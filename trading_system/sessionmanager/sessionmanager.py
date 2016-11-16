@@ -25,8 +25,9 @@ class SessionManager(threading.Thread):
         self.QUERY = "http://localhost:8080/query?id={}"
         self.ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
 
-        # toggle to stop the trading thread
-        self.stop_flag = True
+        # Event flags
+        self.start_flag = threading.Event()
+        self.stop_flag = threading.Event()
 
     def set_channel(self, channel):
         if not self.channel:
@@ -71,14 +72,11 @@ class SessionManager(threading.Thread):
         return quote_message, price
 
     def stop_trade_thread(self):
-        self.stop_flag = True
+        self.stop_flag.set()
 
     def run(self):
-        self.stop_flag = False
 
-        while True:
-            if self.stop_flag:
-                break
+        while not self.stop_flag.is_set():
 
             # Pass by 1 second
             time.sleep(1)
@@ -215,6 +213,10 @@ def ws_message(message):
     content = json.loads(message.content['text'])
     print(content)
 
+    if not sm.start_flag.is_set():
+        sm.start_flag.set()
+        sm.start()
+
     if content['request_type'] == 'order_request':
     
         instrument_id = content['instrument_id']
@@ -241,7 +243,6 @@ def ws_message(message):
         sm.removeSession(instrument_id, 'canceled_order')
 
 
-# Start SessionManager
+# Create SessionManager instance
 sm = SessionManager()
-sm.start()
 

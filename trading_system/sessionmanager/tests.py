@@ -27,10 +27,9 @@ class SessionManagerUnitTester(TestCase):
         s = Session(instrument_id, quantity, order_size, order_discount)        
         self.sm.add_session(instrument_id, s)
 
-
     def tearDown(self):
         self.sm.stop_trade_thread()
-
+        
     def test_add_session(self):
         self.assertEqual(len(self.sm.session_manager), 1)
 
