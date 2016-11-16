@@ -13,17 +13,28 @@ class ViewsTester(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class SessionManagerTester(TestCase):
+class SessionManagerUnitTester(TestCase):
 
     def setUp(self):
         self.sm = SessionManager()
         self.sm.start()
 
+        instrument_id = 0
+        quantity = 100
+        order_size = 10
+        order_discount = 5
+
+        s = Session(instrument_id, quantity, order_size, order_discount)        
+        self.sm.add_session(instrument_id, s)
+
+
     def tearDown(self):
         self.sm.stop_trade_thread()
 
     def test_add_session(self):
-        instrument_id = 0
+        self.assertEqual(len(self.sm.session_manager), 1)
+
+        instrument_id = 1
         quantity = 100
         order_size = 10
         order_discount = 5
@@ -33,14 +44,17 @@ class SessionManagerTester(TestCase):
         self.sm.add_session(instrument_id, s)
 
         # Successfully insert a session
-        self.assertEqual(len(self.sm.session_manager), 1)
+        self.assertEqual(len(self.sm.session_manager), 2)
 
         # Raise exception for repeated session
         with self.assertRaises(ValueError):
             self.sm.add_session(instrument_id, s)
 
     def test_remove_session(self):
-        sid = 0
+        self.assertEqual(len(self.sm.session_manager), 1)
+        self.assertEqual(len(self.sm.removed_session), 0)
+
+        sid = 0        
 
         self.sm.removeSession(sid, 'canceled')
         
@@ -50,7 +64,10 @@ class SessionManagerTester(TestCase):
     def test_quote(self):
         quote_json, price = self.sm.quote()
 
-        self.assertEqual(0, 0)
+        self.assertTrue(isinstance(quote_json, dict))
+        self.assertEqual(len(quote_json), 8)
+
+        self.assertTrue(isinstance(price, float))
 
 class SessionTester(TestCase):
 

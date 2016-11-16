@@ -26,7 +26,7 @@ class SessionManager(threading.Thread):
         self.ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
 
         # toggle to stop the trading thread
-        self.stop_flag = False
+        self.stop_flag = True
 
     def set_channel(self, channel):
         if not self.channel:
@@ -71,10 +71,10 @@ class SessionManager(threading.Thread):
         return quote_message, price
 
     def stop_trade_thread(self):
-        self.stop_flag = False
+        self.stop_flag = True
 
     def run(self):
-        self.stop_flag = True
+        self.stop_flag = False
 
         while True:
             if self.stop_flag:
@@ -155,7 +155,7 @@ class Session(object):
 
             # Attempt to execute a sell order. By only referencing the last price we retrieved
             order_size = min(self.quantity, self.order_size)
-            order_args = (order_size, price - self.order_discount)
+            order_args = (order_size, price * (1 - float(self.order_discount) / 100))
 
             url   = ORDER.format(random.random(), *order_args)
             order = json.loads(request.urlopen(url).read().decode("utf-8"))
