@@ -70,13 +70,45 @@ class SessionManagerUnitTester(TestCase):
 
 class SessionTester(TestCase):
 
-    # def test_trade(self):
-    #     instrument_id = 0
-    #     quantity = 100
-    #     order_size = 10
-    #     order_discount = 5
+    def setUp(self):
+        self.sm = SessionManager()
 
-    #     self.s = Session(instrument_id, quantity, order_size, order_discount)
+    def test_trade_filled(self):
+        instrument_id = 0
+        quantity = 100
+        order_size = 10
+        order_discount = 5
 
-    pass
+        self.s = Session(instrument_id, quantity, order_size, order_discount)
 
+        for _ in range(self.s.bid_window):
+            quote_json, price = self.sm.quote()
+            message = self.s.trade(price)
+            self.assertEqual(message, None)
+
+        quote_json, price = self.sm.quote()
+        message = self.s.trade(price)
+        self.assertTrue(isinstance(message, dict))
+        self.assertEqual(message['message_type'], 'sold_message')
+        self.assertEqual(message['remaining_quantity'], max(0, quantity - order_size))
+
+    def test_trade_unfilled(self):
+        instrument_id = 0
+        quantity = 100
+        order_size = 10
+        order_discount = -5
+
+        self.s = Session(instrument_id, quantity, order_size, order_discount)
+
+        for _ in range(self.s.bid_window):
+            quote_json, price = self.sm.quote()
+            message = self.s.trade(price)
+            self.assertEqual(message, None)
+
+        quote_json, price = self.sm.quote()
+        message = self.s.trade(price)
+        self.assertTrue(isinstance(message, dict))
+        self.assertEqual(message['message_type'], 'unfilled_order')
+        self.assertEqual(message['remaining_quantity'], quantity)
+
+        

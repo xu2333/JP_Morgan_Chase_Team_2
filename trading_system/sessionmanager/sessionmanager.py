@@ -145,9 +145,8 @@ class Session(object):
             self.terminate = True
             return message
 
-        if self.step != self.bid_window:
+        if self.step < self.bid_window:
             self.step += 1
-
         else:
             self.step = 0
 
@@ -181,7 +180,7 @@ class Session(object):
 
                 message = sold_message 
             else:
-                unfilled_messagepip = {
+                unfilled_message = {
                         "instrument_id": self.session_id,
                         "message_type": "unfilled_order",
                         "quote": "",
@@ -191,8 +190,6 @@ class Session(object):
                         "sold_price": "",
                         "pnl": self.pnl 
                     }
-
-                # print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
 
                 message = unfilled_message
 
