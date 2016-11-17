@@ -65,9 +65,9 @@ JPTrader._collectOrderInput = function(){
 
   console.log('in _collected order input');
 
-  let quantity = parseInt(document.getElementById("quantity").value);
-  let orderSize = parseInt(document.getElementById("order_size").value);
-  let discount = parseInt(document.getElementById("discount").value);
+  let quantity = document.getElementById("quantity").value;
+  let orderSize = document.getElementById("order_size").value;
+  let discount = document.getElementById("discount").value;
 
   return [quantity, orderSize, discount];
 
@@ -84,7 +84,10 @@ Refactored function for testing, this is the real checking part.
 */
 JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
   
-  console.log('in _validateCollectedOrderInput');
+  // console.log('in _validateCollectedOrderInput');
+  quantity = parseInt(quantity);
+  orderSize = parseInt(orderSize);
+  discount = parseInt(discount);
 
   const errorMessage = [];
 

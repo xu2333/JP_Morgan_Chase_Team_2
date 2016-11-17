@@ -13,12 +13,59 @@
 
   console.log(JPTrader);
   QUnit.test("[JPTrader] input validation", function( assert ) {
-    var test1 = [1000, 200, 5];
-    assert.deepEqual(JPTrader._validateCollectedOrderInput.apply(null, test1), {
+    
+    const test1 = [1000, 200, 5];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test1), {
       "quantity" : 1000,
       "order_size": 200,
       "order_discount": 5
     });
+
+    const test2 = ["happy", "haha" , "haha"];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test2),
+      ["Your quantity is not a valid number", "Your order size is not a valid number", "Your discount is not a valid number"]
+    );
+
+    const test3 = [200, 1000, 5];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test3),
+      ["Your child order size is bigger than total"]
+    );
+
+    const test4 = [-100, 200, 5];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test4),
+      ["Your quantity should be a positive number", "Your child order size is bigger than total"]
+    );
+
+    const test5 = [-100, -200, 10];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test5), 
+      ["Your quantity should be a positive number", "Your order size should be a positive number"]
+    );
+
+    const test6 = [0.2, 0.1, 5];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test6),
+      ["Your quantity should be a positive number", "Your order size should be a positive number"]
+    );
+
+    const test7 = [1000, 200, 500];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test7),
+      ["Your discount should in 0-100"]
+    );
+
+    const test8 = [1000, 200, "Javachip"];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test8),
+      ["Your discount is not a valid number"]
+    );    
+
+    const test9 = [1000, "Javachip", 10];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test9),
+      ["Your order size is not a valid number"]
+    );    
+
+    const test10 = ["", "", ""];
+    assert.deepEqual( JPTrader._validateCollectedOrderInput.apply(null, test10),
+      ["Your quantity is not a valid number","Your order size is not a valid number","Your discount is not a valid number"]
+    );    
+
   });
   </script>
 </head>
