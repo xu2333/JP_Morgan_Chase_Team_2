@@ -21,3 +21,6 @@ def dashboard(request):
 
 	# return render(request, 'dashboard/dashboard.html', {'apple': str(data)})
 	return render(request, 'dashboard/dashboard.html')
+
+def test(request):
+	return render(request, 'dashboard/test.html');

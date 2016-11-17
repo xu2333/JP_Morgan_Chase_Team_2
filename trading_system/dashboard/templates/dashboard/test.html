@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Refactored date examples</title>
+ 
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.0.1.css">
+  <script src="https://code.jquery.com/qunit/qunit-2.0.1.js"></script>
+  {% load static %}
+  <script src="{% static 'dashboard.js' %}"></script>
+ 
+  <script>
+
+  console.log(JPTrader);
+  QUnit.test("[JPTrader] input validation", function( assert ) {
+    var test1 = [1000, 200, 5];
+    assert.deepEqual(JPTrader._validateCollectedOrderInput.apply(null, test1), {
+      "quantity" : 1000,
+      "order_size": 200,
+      "order_discount": 5
+    });
+  });
+  </script>
+</head>
+<body>
+ 
+<div id="qunit"></div>
+ 
+</body>
+</html>

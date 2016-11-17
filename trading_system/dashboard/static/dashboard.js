@@ -55,50 +55,88 @@ JPTrader._clearForm = function(){
 }
 
 
+
+/**
+Refactored function for testing, seperate collecting data from user and the real checking part
+@param {None}
+@return {JSON} 
+*/
+JPTrader._collectOrderInput = function(){
+
+  console.log('in _collected order input');
+
+  let quantity = parseInt(document.getElementById("quantity").value);
+  let orderSize = parseInt(document.getElementById("order_size").value);
+  let discount = parseInt(document.getElementById("discount").value);
+
+  return [quantity, orderSize, discount];
+
+}
+
+
+
+/**
+Refactored function for testing, this is the real checking part. 
+@param {Number} quantity 
+@param {Number} orderSize
+@param {Number} discount
+@return {JSON/Array} result/ errorMessage 
+*/
+JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
+  
+  console.log('in _validateCollectedOrderInput');
+
+  const errorMessage = [];
+
+  if ( isNaN(quantity) ) errorMessage.push("Your quantity is not a valid number");
+  if ( quantity <= 0 ) errorMessage.push("Your quantity should be a positive number");
+  if ( isNaN(orderSize) ) errorMessage.push("Your order size is not a valid number");
+  if ( orderSize <= 0 ) errorMessage.push("Your order size should be a positive number");
+  if ( orderSize > quantity ) errorMessage.push("Your child order size is bigger than total");
+  if ( isNaN(discount) ) errorMessage.push("Your discount is not a valid number");
+  if ( discount < 0 || discount > 100 ) errorMessage.push("Your discount should in 0-100");
+
+  if ( errorMessage.length > 0 ) {
+    
+    return errorMessage;
+  
+  } else {
+
+    const result = {
+      "order_discount": discount,
+      "order_size": orderSize,
+      "quantity": quantity
+    };
+
+    console.log(result);
+    return result;
+  }
+
+}
+
+
+
 /**
 Validate form value, include checking missing data and mal-format data.
 @return {JSON} result - will only return a json object if all input are validated, otherwise, return null.
 */
 JPTrader.validateOrderInput = function(){
 
-  // const result = {};
-  const DATA_FIELDS = [/*"instrument_id",*/ "quantity", "order_size", "discount"];
-  const errorMessage = [];
+  let collectedInput = this._collectOrderInput();
+  let result = this._validateCollectedOrderInput.apply(null, collectedInput);
 
-  // Validate Quantity
-  let quantity = parseInt(document.getElementById("quantity").value);
-  if ( isNaN(quantity) ) errorMessage.push("Your quantity is not a valid number");
-  if ( quantity <= 0 ) errorMessage.push("Your quantity should be a positive number");
-
-  // Validate order size
-  let orderSize = parseInt(document.getElementById("order_size").value);
-  if ( isNaN(orderSize) ) errorMessage.push("Your order size is not a valid number");
-  if ( orderSize <= 0 ) errorMessage.push("Your order size should be a positive number");
-  if ( orderSize > quantity ) errorMessage.push("Your child order size is bigger than total");
-
-  // Validate discount
-  let discount = parseInt(document.getElementById("discount").value);
-  if ( isNaN(discount) ) errorMessage.push("Your discount is not a valid number");
-  if ( discount < 0 || discount > 100 ) errorMessage.push("Your discount should in 0-100");
-
-  if ( errorMessage.length > 0 ) {
-    // Insert the error message some where so the user can see...
-
-    document.querySelector("#input-error-message").innerHTML = errorMessage.join("<br>");
-    console.log(errorMessage);
+  if (result instanceof Array) {
+    // show error message
+    document.querySelector("#input-error-message").innerHTML = result.join("<br>");
     return null;
-  } else {
+  } 
+  else {
+    // this is a correct JSON result, update the ui and return it.
 
     // clean the error message 
     document.querySelector("#input-error-message").innerHTML = "";
-
-    const result = {
-      "quantity": quantity,
-      "order_size": orderSize,
-      "order_discount": discount
-    };
-
     return result;
+
   }
 
 }
@@ -191,7 +229,7 @@ JPTrader.sendWithSocket = function( orderData ){
   };
 
   if ( typeof this.ws === 'undefined' ){
-    this.initWebSocket(sendMessageAndDisplayOrder.bind( this ));
+    this.initWebSocket( sendMessageAndDisplayOrder.bind( this ) );
   } else {
     sendMessageAndDisplayOrder.call( this );
   }
@@ -210,6 +248,7 @@ JPTrader.initWebSocket = function( callback ){
 
     // open a websocket
     this.ws = new WebSocket("ws://" + window.location.host + "/chat/");
+
     this.ws.onopen = function(){
       callback();
     };
@@ -551,6 +590,9 @@ A function to setup all the interactions, linkage and connections
 @return {undefined}
 */
 JPTrader.init = function(){
+
+  // this is probably testing...
+  if ( document.getElementById("make-order-btn") === null ) return;
 
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
   
