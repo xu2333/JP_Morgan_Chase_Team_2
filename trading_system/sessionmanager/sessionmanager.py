@@ -25,6 +25,10 @@ class SessionManager(threading.Thread):
         self.QUERY = "http://localhost:8080/query?id={}"
         self.ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
 
+        # Event flags
+        self.start_flag = threading.Event()
+        self.stop_flag = threading.Event()
+
     def set_channel(self, channel):
         if not self.channel:
             self.channel = channel
@@ -40,7 +44,7 @@ class SessionManager(threading.Thread):
 
         del self.session_manager[sid]
 
-    def add_seesion(self, sid, session):
+    def add_session(self, sid, session):
         if sid in self.session_manager:
             raise ValueError('Repeated sid')
 
@@ -66,10 +70,14 @@ class SessionManager(threading.Thread):
             }
 
         return quote_message, price
-        
+
+    def stop_trade_thread(self):
+        self.stop_flag.set()
 
     def run(self):
-        while True:
+
+        while not self.stop_flag.is_set():
+
             # Pass by 1 second
             time.sleep(1)
             if not self.channel:
@@ -84,8 +92,6 @@ class SessionManager(threading.Thread):
                 self.removeSession(sid, 'finished_order')
 
             return_list = self.removed_session + [quote_json]
-
-            print(return_list)
             
             # For each order
             if self.session_manager:
@@ -95,8 +101,7 @@ class SessionManager(threading.Thread):
                     if order_json:
                         return_list.append(order_json)
 
-            print(return_list)
-
+            # Send the combined order execution list
             self.channel.send({
                 "text": json.dumps(return_list)
             })
@@ -140,15 +145,14 @@ class Session(object):
             self.terminate = True
             return message
 
-        if self.step != self.bid_window:
+        if self.step < self.bid_window:
             self.step += 1
-
         else:
             self.step = 0
 
             # Attempt to execute a sell order. By only referencing the last price we retrieved
             order_size = min(self.quantity, self.order_size)
-            order_args = (order_size, price - self.order_discount)
+            order_args = (order_size, price * (1 - float(self.order_discount) / 100))
 
             url   = ORDER.format(random.random(), *order_args)
             order = json.loads(request.urlopen(url).read().decode("utf-8"))
@@ -176,7 +180,7 @@ class Session(object):
 
                 message = sold_message 
             else:
-                unfilled_messagepip = {
+                unfilled_message = {
                         "instrument_id": self.session_id,
                         "message_type": "unfilled_order",
                         "quote": "",
@@ -186,8 +190,6 @@ class Session(object):
                         "sold_price": "",
                         "pnl": self.pnl 
                     }
-
-                # print("Unfilled order; $%s total, %s qty" % (pnl, qty) )
 
                 message = unfilled_message
 
@@ -208,6 +210,10 @@ def ws_message(message):
     content = json.loads(message.content['text'])
     print(content)
 
+    if not sm.start_flag.is_set():
+        sm.start_flag.set()
+        sm.start()
+
     if content['request_type'] == 'order_request':
     
         instrument_id = content['instrument_id']
@@ -225,7 +231,7 @@ def ws_message(message):
 
         session = Session( instrument_id, quantity, order_size, order_discount)
 
-        sm.add_seesion(instrument_id, session)
+        sm.add_session(instrument_id, session)
     
     elif content['request_type'] == 'cancel_request':
 
@@ -234,9 +240,6 @@ def ws_message(message):
         sm.removeSession(instrument_id, 'canceled_order')
 
 
-# Start SessionManager
-
-print("When did you do this?????")
+# Create SessionManager instance
 sm = SessionManager()
-sm.start()
 
