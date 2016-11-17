@@ -9,15 +9,25 @@ Another potential Resources: [django-socket.io](http://blog.jupo.org/2011/08/13/
 
 
 
+## Test Case For Javascript
+After you start running this application using
+```
+python manage.py runserver
+```
+
+You can access our javascript test page of [QUnit](https://qunitjs.com/) by going to the page
+```
+http://localhost:8000/dashboard/test/
+```
+
+
+
+
+
 
 
 ## Communication between client and server
 This application uses socket to send message between the client side(trader) and the server side that manages multiple order requests. Data are sent by using JSON format.
-
-
-
-
-
 
 
 
