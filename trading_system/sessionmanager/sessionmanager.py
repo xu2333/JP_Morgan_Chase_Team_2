@@ -13,11 +13,11 @@ import threading
 
 class SessionManager():
     def __init__(self):
-        threading.Thread.__init__(self)
-
         # Internal memory
         self.session_manager = {}
-        self.removed_session = []
+        self.removed_session_cache = []
+        self.canceled_session = {}
+
         self.channel = None
         self.bid_window = 5
         # Server API URLs
@@ -36,8 +36,9 @@ class SessionManager():
         self.stop_flag.set()
 
         # Reset memory
-        self.session_manager = {}
-        self.removed_session = []
+        self.session_manager.clear()
+        self.removed_session_cache.clear()
+        self.canceled_session.clear()
         self.channel = None
 
         # Re-create a thread
@@ -49,21 +50,39 @@ class SessionManager():
             self.channel = channel
 
     def removeSession(self, sid, remove_type):
-        
-        self.removed_session.append({
+        # Validation check
+        if sid not in self.session_manager:
+            return
+
+        self.removed_session_cache.append({
             "instrument_id": sid,
             "message_type": remove_type,
             "remaining_quantity": self.session_manager[sid].quantity,
             "pnl": self.session_manager[sid].pnl
             })
 
+        # Backup the canceled order for resuming and restarting
+        if remove_type == 'canceled_order':
+            self.canceled_session[sid] = self.session_manager[sid]
+
+        # Remove the session from the current session manager
         del self.session_manager[sid]
 
     def add_session(self, sid, session):
+        # Validation check
         if sid in self.session_manager:
-            raise ValueError('Repeated sid')
+            return
 
         self.session_manager[sid] = session
+
+    def resume_canceled_session(self, sid):
+        # Validation check
+        if sid not in self.canceled_session or sid in self.session_manager:
+            return
+
+        # Retrieve the canceled_order and put it into session manager
+        self.session_manager[sid] = self.canceled_session[sid]
+        del self.canceled_session[sid]
 
     def quote(self):
         # talk to market
@@ -107,7 +126,7 @@ class SessionManager():
             for sid in del_sid:
                 self.removeSession(sid, 'finished_order')
 
-            return_list = self.removed_session + [quote_json]
+            return_list = self.removed_session_cache + [quote_json]
             
             # For each order
             if self.session_manager:
@@ -123,7 +142,7 @@ class SessionManager():
             })
 
             # Empty the removed session list
-            del self.removed_session[:]
+            self.removed_session_cache.clear()
 
         # Reset start and stop flag
         self.start_flag.clear()
@@ -136,6 +155,8 @@ class Session(object):
         self.quantity = quantity
         self.order_size = order_size
         self.order_discount = order_discount
+
+        self.ori_quantity = quantity
 
         # a value to return at the end of trade function
         self.pnl = 0
@@ -239,9 +260,10 @@ def ws_message(message):
         # Start the thread
         sm.thread.start()
 
-    if content['request_type'] == 'order_request':
-    
-        instrument_id = content['instrument_id']
+    request_type = content['request_type']
+    instrument_id = content['instrument_id']
+
+    if request_type == 'order_request':
         quantity = int(content['quantity'])
         order_size = int(content['order_size'])
         order_discount = int(content['order_discount'])
@@ -259,10 +281,11 @@ def ws_message(message):
         # Add the session instance to the Session Manager
         sm.add_session(instrument_id, session)
     
-    elif content['request_type'] == 'cancel_request':
-        instrument_id = content['instrument_id']
-
+    elif request_type == 'cancel_request':
         sm.removeSession(instrument_id, 'canceled_order')
+
+    elif request_type == 'resume_request':
+        sm.resume_canceled_session(instrument_id)
 
 
 # Create SessionManager instance
