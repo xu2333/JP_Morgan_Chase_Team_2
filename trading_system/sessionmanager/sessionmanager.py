@@ -86,9 +86,11 @@ class SessionManager():
         self.add_session(self.canceled_session[sid])
         del self.canceled_session[sid]
 
-        self.removed_session_cache.append({
+        self.resumed_session_cache.append({
             "instrument_id": sid,
-            "message_type": "resume_order"
+            "message_type": "resume_order",
+            "remaining_quantity": self.session_manager[sid].quantity,
+            "pnl": self.session_manager[sid].pnl
         })
 
 
