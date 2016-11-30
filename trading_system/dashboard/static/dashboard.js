@@ -1,4 +1,3 @@
-
 'use strict';
 
 // Create a name space 
@@ -8,7 +7,7 @@ let JPTrader = {
   currentOrders  : [],
   finishedOrders : [],
   canceledOrders  : [],
-  // 
+  
   quoteData:[],
   // this array gives you direct access to each orderWrap <div> element by using its instrument_id as index.
   orderDOM: [],
@@ -224,6 +223,10 @@ JPTrader.sendWithSocket = function( orderData ){
       "handler": dataHandler
     });
 
+    // set the collapse attribute so when a user want to see detail of a trade
+    // we won't hide it while update, init with true, meaning, usually we hide it.
+    orderWrap.dataset.collapse = true;
+
     // put this div element into orderDOM array for easier future access
     this.orderDOM.push(orderWrap);
 
@@ -367,19 +370,23 @@ JPTrader.dataHandler = function( d ){
     let soldPrice = d['sold_price'];
     let remainingQuantity = d['remaining_quantity'];
     const pnl = +d["pnl"];
-    const instrumentId = d["instrument_id"];
+    const instrumentId = +d["instrument_id"];
+    const orderWrap = JPTrader.orderDOM[instrumentId];
 
     tableBody.innerHTML = JPTrader._tableRowHelper( soldPrice, remainingQuantity, parseFloat(pnl).toFixed(2) ) + tableBody.innerHTML;
 
     // update the table body to show only the latest latest trade-detail
-    const detailRows = Array.prototype.slice.apply(tableBody.querySelectorAll("tr.trade-detail"));
-    detailRows.forEach(function(row){
-      row.style.display = "none";
-    });
-    const latest = detailRows[0];
-    latest.style.display = "table-row";
-
+    if ( orderWrap.dataset.collapse === "true" ) {
+      const detailRows = Array.prototype.slice.apply(tableBody.querySelectorAll("tr.trade-detail"));
+      detailRows.forEach(function(row){
+        row.style.display = "none";
+      });
+      const latest = detailRows[0];
+      latest.style.display = "table-row";  
+    }
+    
     // if the order is finished, move the order from currentOrders to finishedOrders
+    // and remove the cancel button
     if ( remainingQuantity === 0 ){
 
       const indexToRemove = JPTrader.currentOrders.findIndex(function(ele){
@@ -388,23 +395,15 @@ JPTrader.dataHandler = function( d ){
 
       try {
 
-        JPTrader._removeCancelButton(instrument_id);
-
+        JPTrader._removeCancelButton(instrumentId);
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
           JPTrader.finishedOrders.push(objectToMove);  
         }
 
-        // checking the update of order status in the following two arrays.
-        // console.log('JPTrader orders maintainance...');
-        // console.log(JPTrader.currentOrders);
-        // console.log(JPTrader.finishedOrders);
-
       } catch(e) {
-        // statements
         console.log(e);
         console.log("move from currentOrders to finishedOrders failed...");
-
       }     
     
     }
@@ -425,7 +424,7 @@ A helper function that takes three value and return a table row element
 JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
 
   if ( soldPrice === "collapse" ) {
-    return `<tr class="collapse-row"><td></td><td><img src="../static/img/more.png"></td><td></td></tr>`
+    return `<tr class="collapse-row"><td class="collapse-row"></td><td class="collapse-row"><img class="collapse-row" src="../static/img/more.png"></td><td class="collapse-row"></td></tr>`
   }
 
   if ( +remaining === 0 || soldPrice === "Start" ){
@@ -592,6 +591,82 @@ JPTrader.drawChart = function( firstQuote ){
 
 
 
+JPTrader._collapseTradeDetailHandler = function(e){
+  // find the closest row
+  let tr = e.target;
+  console.log(e.target);
+  while( tr.tagName !== "TR" ) {
+    tr = tr.parentNode;
+  }
+
+  if (tr === null) return;
+
+  // check if it's clicking on the child of collapse row
+  if ( tr.classList.contains("collapse-row") ) {
+
+    // show all the detail after clicking this...
+    let orderWrap = e.target.parentNode;
+    while( !orderWrap.classList.contains("order-wrap") ){
+      orderWrap = orderWrap.parentNode;
+    }
+
+    // if there are no detail yet, we return
+    let tradeDetails = orderWrap.querySelectorAll(".trade-detail");
+    if ( tradeDetails.length === 0 ) return;
+
+    // console.log('order wrap after clicking on the three dots...');
+    // console.log(orderWrap);
+    orderWrap.dataset.collapse = false;
+
+    tradeDetails.forEach(function(row){
+      row.style.display = "table-row";
+    });
+
+    const collapseRow = orderWrap.querySelector("tr.collapse-row");
+    collapseRow.style.display = "none";
+
+  } else if ( tr.classList.contains("trade-detail") ) {
+
+    console.log(' in the trade detail part...');
+    // hide all the detail, if collapse == false
+
+    // look for order wrap dom.
+    let orderWrap = tr.parentNode;
+    while( !orderWrap.classList.contains("order-wrap") ){
+      orderWrap = orderWrap.parentNode;
+    }
+    
+    // if the collapse state is true, don't do anything
+    if ( orderWrap.dataset.collapse === 'true' ) return;
+    // else, hide all but the last one
+    if ( orderWrap.dataset.collapse === 'false' ) {
+
+      orderWrap.dataset.collapse = true;
+      // if there are two success rows already, which means that the trade has finished 
+      // successfully, we hide all the trade detail.
+      if ( orderWrap.querySelectorAll("tr.success").length >= 2 ) {
+        orderWrap.querySelectorAll("tr.trade-detail").forEach(function(tradeDetail){
+          tradeDetail.style.display = "none";
+        });
+      }
+      // otherwise we keep the latest trading detail visible
+      else {
+
+        const detailToHide = Array.prototype.slice.call( orderWrap.querySelectorAll("tr.trade-detail"), 1);
+        detailToHide.forEach(function(detailRow){
+          detailRow.style.display = "none";
+        });
+
+      }
+
+      // show the three dot icon, so that user can show the detail again
+      const collapseRow = orderWrap.querySelector("tr.collapse-row");
+      collapseRow.style.display = "table-row";
+
+    }
+  }
+}
+
 
 /**
 A function to setup all the interactions, linkage and connections
@@ -616,18 +691,11 @@ JPTrader.init = function(){
   this.quoteData = Array(243);
   this.quoteData.fill(0);
 
-
-  // set delegate for all collapse button
-  const leftCol = document.getElementsByClassName("right-col")[0];
-  console.log(leftCol);
-
-  leftCol.addEventListener("click", function(e){
-    if ( e.target.className === "collapse-row") {
-      console.log("delegate detected...");
-    } else {
-
-    }
-  });
+  // set delegate for all collapse button and trade detail button
+  // so when users click on the three dots icon, the table collapse
+  // when they click on trade-detail rows, trade detail hides.
+  const leftCol = document.querySelector(".right-col");
+  leftCol.addEventListener( "click", this._collapseTradeDetailHandler );
 
   JPTrader.drawChart(100);
 

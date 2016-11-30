@@ -53,7 +53,15 @@ path.domain{
 }
 
 .trade-detail{
-  display: none;
+  /*display: none;*/
+}
+
+.trade-detail:hover{
+  cursor: pointer;
+}
+
+.collapse-row:hover{
+  cursor: pointer;
 }
 
 .trade-detail:last-of-type{
