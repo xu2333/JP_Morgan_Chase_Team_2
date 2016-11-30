@@ -175,7 +175,7 @@ JPTrader.sendWithSocket = function( orderData ){
         "request_type": "cancel_request",
         "instrument_id": orderData["instrument_id"]
       };
-      this.ws.send(JSON.stringify(cancelRequest));
+      this.ws.send( JSON.stringify(cancelRequest) );
     };
     cancelButton.addEventListener("click", cancel.bind(this));
 
@@ -186,13 +186,15 @@ JPTrader.sendWithSocket = function( orderData ){
     resumeButton.classList.add("resume-button");
     resumeButton.style.display = "none";
     const resume = function(e){
+
+      console.log('resume button clicked');
       const resumeRequest = {
         "request_type": "resume_request",
         "instrument_id": orderData["instrument_id"]
       };
-      this.ws.send(JSON.stringify(resumeRequest));
+      this.ws.send( JSON.stringify(resumeRequest) );
     }
-    resumeButton.addEventListener("click", resume);
+    resumeButton.addEventListener("click", resume.bind(this));
 
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
@@ -313,11 +315,9 @@ JPTrader.initWebSocket = function( callback ){
             };
             break;
 
-          case "resume_message":
-
+          case "resume_order":
+            JPTrader._resumeHandler( message );
             break;
-
-
 
           case "unfilled_order":
 
@@ -439,7 +439,10 @@ A helper function that takes three value and return a table row element
 JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
 
   if ( soldPrice === "collapse" ) {
-    return `<tr class="collapse-row"><td class="collapse-row"></td><td class="collapse-row"><img class="collapse-row" src="../static/img/more.png"></td><td class="collapse-row"></td></tr>`
+    return `<tr class="collapse-row"><td class="collapse-row"></td><td class="collapse-row"><img class="collapse-row" src="../static/img/more.png"></td><td class="collapse-row"></td></tr>`;
+  }
+  if ( soldPrice === "Resume" ) {
+    return `<tr class="table-info"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`;
   }
 
   if ( +remaining === 0 || soldPrice === "Start" ){
@@ -448,6 +451,7 @@ JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
   if ( soldPrice === "Canceled" ){
     return `<tr class="danger"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
   }
+
   return `<tr class="trade-detail"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
 
 }
@@ -502,7 +506,7 @@ JPTrader._canceledHandler = function( d ){
       console.log(`index to remove: ${indexToRemove}`);
       console.log(`canceled id: ${canceledId}`);
       this._removeCancelButton( canceledId );
-      this._showResumeButton( cancelId );
+      this._showResumeButton( canceledId );
 
       var objectToMove = this.currentOrders.splice(indexToRemove, 1)[0];
       console.log(this.currentOrders)
@@ -526,7 +530,42 @@ JPTrader._canceledHandler = function( d ){
 }
 
 JPTrader._resumeHandler = function( d ){
-  
+
+  const resumeId = +d['instrument_id'];
+
+  // move it from current order to canceledOrder
+  const indexToRemove = this.canceledOrders.findIndex(function( ele ){
+    return (+ele['instrument_id']) === canceledId;
+  });
+
+  try {
+
+    console.log(`index to remove: ${indexToRemove}`);
+    console.log(`canceled id: ${canceledId}`);
+    this._removeResumeButton( resumedId );
+    this._showCancelButton( resumeId );
+
+    var objectToMove = this.canceledOrders.splice(indexToRemove, 1)[0];
+    console.log(this.canceledOrders);
+
+    if ( objectToMove !== null ){
+      this.currentOrders.push(objectToMove);  
+    }
+
+  } catch(e) {
+    // statements
+    console.log(e);
+
+  }
+
+  // Insert data into corresponding table
+  const orderWrap = this.orderDOM[resumeId];
+  const tableBody = orderWrap.querySelector("tbody.p");
+
+  // look for canceled message and remove it? 
+  // add new resumed message
+
+  tableBody.innerHTML = this._tableRowHelper( "Resume", d["remaining_quantity"], (+d["pnl"]).toFixed(2) ) + tableBody.innerHTML;
 }
 
 
