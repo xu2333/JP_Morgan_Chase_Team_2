@@ -170,26 +170,32 @@ JPTrader.sendWithSocket = function( orderData ){
     cancelButton.classList.add("cancel-button");
     cancelButton.classList.add("btn");
     cancelButton.classList.add("btn-danger");
-
     let cancel = function(){
-
       const cancelRequest = {
         "request_type": "cancel_request",
         "instrument_id": orderData["instrument_id"]
       };
-
       this.ws.send(JSON.stringify(cancelRequest));
     };
-
     cancelButton.addEventListener("click", cancel.bind(this));
+
+    const resumeButton = document.createElement("button");
+    resumeButton.textContent = "Resume Order";
+    resumeButton.classList.add("btn");
+    resumeButton.classList.add("btn-link");
+    resumeButton.classList.add("resume-button");
+    resumeButton.style.display = "none";
+    const resume = function(e){
+      const resumeRequest = {
+        "request_type": "resume_request",
+        "instrument_id": orderData["instrument_id"]
+      };
+      this.ws.send(JSON.stringify(resumeRequest));
+    }
+    resumeButton.addEventListener("click", resume);
 
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
-
-    /* DEPRECATED
-    const orderProgress = document.createElement("p");
-    orderProgress.setAttribute("class", "realtime-log");
-    */
 
     const progressTable = document.createElement("table");
     progressTable.setAttribute("class", "table");
@@ -208,6 +214,7 @@ JPTrader.sendWithSocket = function( orderData ){
     orderWrap.appendChild( titleLabel );
     orderWrap.appendChild( chartWrap );
     orderWrap.appendChild( cancelButton );
+    orderWrap.appendChild( resumeButton );
     orderWrap.appendChild( progressTable );
 
     // render this order
@@ -229,7 +236,6 @@ JPTrader.sendWithSocket = function( orderData ){
 
     // put this div element into orderDOM array for easier future access
     this.orderDOM.push(orderWrap);
-
     this._clearForm();
 
   };
@@ -306,6 +312,12 @@ JPTrader.initWebSocket = function( callback ){
               }
             };
             break;
+
+          case "resume_message":
+
+            break;
+
+
 
           case "unfilled_order":
 
@@ -396,10 +408,13 @@ JPTrader.dataHandler = function( d ){
       try {
 
         JPTrader._removeCancelButton(instrumentId);
+        JPTrader._removeResumeButton(instrumentId);
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
           JPTrader.finishedOrders.push(objectToMove);  
         }
+
+
 
       } catch(e) {
         console.log(e);
@@ -444,13 +459,32 @@ A helper function to remove the cancel button by a given id. Will be called if t
 @return {undefined}
 */
 JPTrader._removeCancelButton = function( instrument_id ){
-  this.orderDOM[+instrument_id].querySelector(".cancel-button").remove();
+  const cancelButton = this.orderDOM[+instrument_id].querySelector(".cancel-button");
+  cancelButton.style.display = "none";
+  //.remove();
 }
+
+JPTrader._removeResumeButton = function( instrument_id ){
+  const removeButton = this.orderDOM[+instrument_id].querySelector(".resume-button");
+  removeButton.style.display = "none";
+}
+
+JPTrader._showCancelButton = function( instrument_id ) {
+  const cancelButton = this.orderDOM[+instrument_id].querySelector(".cancel-button");
+  cancelButton.style.display = "inline-block";
+}
+
+JPTrader._showResumeButton = function( instrument_id ) {
+  const resumeButton = this.orderDOM[+instrument_id].querySelector(".resume-button");
+  resumeButton.style.display = "inline-block";
+}
+
 
 
 /**
 One of the data handler that works specifically for ack of canceled orders. 
 Moves the order into canceledOrder array of JPTrader and update the ui for that specific order.
+Also add the resume button back
 @param {JSON} d - a json object return from the server
 @return {undefined}
 */
@@ -467,7 +501,8 @@ JPTrader._canceledHandler = function( d ){
 
       console.log(`index to remove: ${indexToRemove}`);
       console.log(`canceled id: ${canceledId}`);
-      this._removeCancelButton(canceledId);
+      this._removeCancelButton( canceledId );
+      this._showResumeButton( cancelId );
 
       var objectToMove = this.currentOrders.splice(indexToRemove, 1)[0];
       console.log(this.currentOrders)
@@ -489,6 +524,11 @@ JPTrader._canceledHandler = function( d ){
     tableBody.innerHTML = this._tableRowHelper( "Canceled", d["remaining_quantity"], (+d["pnl"]).toFixed(2) ) + tableBody.innerHTML;
 
 }
+
+JPTrader._resumeHandler = function( d ){
+  
+}
+
 
 
 /**
@@ -590,18 +630,23 @@ JPTrader.drawChart = function( firstQuote ){
 }
 
 
-
+/**
+A click delegate for all order wrap tables. This function will collapse and open the 
+trading details while user wants to look for more. This function should be added on the 
+right-col div.
+@param {Event} e
+*/
 JPTrader._collapseTradeDetailHandler = function(e){
+
   // find the closest row
   let tr = e.target;
-  console.log(e.target);
   while( tr.tagName !== "TR" ) {
     tr = tr.parentNode;
+    if ( !tr ) return;
   }
 
-  if (tr === null) return;
-
   // check if it's clicking on the child of collapse row
+  // we show all detail
   if ( tr.classList.contains("collapse-row") ) {
 
     // show all the detail after clicking this...
@@ -610,12 +655,10 @@ JPTrader._collapseTradeDetailHandler = function(e){
       orderWrap = orderWrap.parentNode;
     }
 
-    // if there are no detail yet, we return
+    // if there are no detail yet, which means that this order just started, we return.
     let tradeDetails = orderWrap.querySelectorAll(".trade-detail");
     if ( tradeDetails.length === 0 ) return;
 
-    // console.log('order wrap after clicking on the three dots...');
-    // console.log(orderWrap);
     orderWrap.dataset.collapse = false;
 
     tradeDetails.forEach(function(row){
@@ -625,10 +668,9 @@ JPTrader._collapseTradeDetailHandler = function(e){
     const collapseRow = orderWrap.querySelector("tr.collapse-row");
     collapseRow.style.display = "none";
 
+  // check if the user is clicking on any detail row
+  // if so, we collapse all detail
   } else if ( tr.classList.contains("trade-detail") ) {
-
-    console.log(' in the trade detail part...');
-    // hide all the detail, if collapse == false
 
     // look for order wrap dom.
     let orderWrap = tr.parentNode;
@@ -674,7 +716,6 @@ A function to setup all the interactions, linkage and connections
 */
 JPTrader.init = function(){
 
-  // this is probably testing...
   if ( document.getElementById("make-order-btn") === null ) return;
 
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
