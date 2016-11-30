@@ -201,7 +201,7 @@ JPTrader.sendWithSocket = function( orderData ){
 
     const tableBody = document.createElement("tbody");
     tableBody.setAttribute("class", "p");
-    tableBody.innerHTML = this._tableRowHelper("Start", orderData["quantity"], 0);
+    tableBody.innerHTML = this._tableRowHelper("collapse", "", "") + this._tableRowHelper("Start", orderData["quantity"], 0);
 
     progressTable.appendChild(tableBody);
 
@@ -371,6 +371,14 @@ JPTrader.dataHandler = function( d ){
 
     tableBody.innerHTML = JPTrader._tableRowHelper( soldPrice, remainingQuantity, parseFloat(pnl).toFixed(2) ) + tableBody.innerHTML;
 
+    // update the table body to show only the latest latest trade-detail
+    const detailRows = Array.prototype.slice.apply(tableBody.querySelectorAll("tr.trade-detail"));
+    detailRows.forEach(function(row){
+      row.style.display = "none";
+    });
+    const latest = detailRows[0];
+    latest.style.display = "table-row";
+
     // if the order is finished, move the order from currentOrders to finishedOrders
     if ( remainingQuantity === 0 ){
 
@@ -380,7 +388,7 @@ JPTrader.dataHandler = function( d ){
 
       try {
 
-        JPTrader._removeCancelButton(indexToRemove);
+        JPTrader._removeCancelButton(instrument_id);
 
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
@@ -416,13 +424,17 @@ A helper function that takes three value and return a table row element
 */
 JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
 
+  if ( soldPrice === "collapse" ) {
+    return `<tr class="collapse-row"><td></td><td><img src="../static/img/more.png"></td><td></td></tr>`
+  }
+
   if ( +remaining === 0 || soldPrice === "Start" ){
     return `<tr class="success"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
   }
   if ( soldPrice === "Canceled" ){
     return `<tr class="danger"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
   }
-  return `<tr><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
+  return `<tr class="trade-detail"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
 
 }
 
@@ -454,23 +466,16 @@ JPTrader._canceledHandler = function( d ){
 
     try {
 
-      // console.log('Check order maintainance status...');
-      // console.log(this.currentOrders);
-      // console.log(this.canceledOrders);
-
       console.log(`index to remove: ${indexToRemove}`);
-      this._removeCancelButton(indexToRemove);
+      console.log(`canceled id: ${canceledId}`);
+      this._removeCancelButton(canceledId);
 
       var objectToMove = this.currentOrders.splice(indexToRemove, 1)[0];
+      console.log(this.currentOrders)
 
       if ( objectToMove !== null ){
         this.canceledOrders.push(objectToMove);  
       }
-
-      // console.log('Check order maintainance status...');
-      // console.log(this.currentOrders);
-      // console.log(this.canceledOrders);
-      
 
     } catch(e) {
       // statements
@@ -600,6 +605,11 @@ JPTrader.init = function(){
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
   
   window.onbeforeunload = function(){
+    JPTrader.ws.close();
+  }
+
+  window.onunload = function(){
+    console.log('in window on unload...');
     JPTrader.ws.close();
   }
 

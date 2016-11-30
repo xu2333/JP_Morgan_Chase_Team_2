@@ -51,3 +51,16 @@ path.domain{
 .instrument_ids{
   margin-left: 78px;
 }
+
+.trade-detail{
+  display: none;
+}
+
+.trade-detail:last-of-type{
+  display: table-row;
+}
+
+img[src$='more.png']{
+  height: 24px;
+}
+
