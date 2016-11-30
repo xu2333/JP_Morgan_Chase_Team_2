@@ -12,11 +12,11 @@ import json, csv
 import random
 import threading
 
-class SessionManager(threading.Thread):
-
+class SessionManager():
     def __init__(self):
         threading.Thread.__init__(self)
 
+        # Internal memory
         self.session_manager = {}
         self.removed_session = []
         self.channel = None
@@ -29,13 +29,20 @@ class SessionManager(threading.Thread):
         self.start_flag = threading.Event()
         self.stop_flag = threading.Event()
 
+        # Create a thread
+        self.thread = threading.Thread(target=self.run)
+
     def reset(self):
-        # Stop trading
+        # Stop the current trading thread
         self.stop_flag.set()
 
+        # Reset memory
         self.session_manager = {}
         self.removed_session = []
         self.channel = None
+
+        # Re-create a thread
+        self.thread = threading.Thread(target=self.run)
 
 
     def set_channel(self, channel):
@@ -229,7 +236,7 @@ def ws_message(message):
 
     if not sm.start_flag.is_set():
         sm.start_flag.set()
-        sm.start()
+        sm.thread.start()
 
     if content['request_type'] == 'order_request':
     
