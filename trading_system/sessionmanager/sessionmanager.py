@@ -83,7 +83,7 @@ class SessionManager():
             return
 
         # Retrieve the canceled_order and put it into session manager
-        self.add_session(self.canceled_session[sid])
+        self.add_session(sid, self.canceled_session[sid])
         del self.canceled_session[sid]
 
         self.resumed_session_cache.append({
