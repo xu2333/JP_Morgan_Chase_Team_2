@@ -15,8 +15,10 @@ class SessionManager():
     def __init__(self):
         # Internal memory
         self.session_manager = {}
-        self.removed_session_cache = []
         self.canceled_session = {}
+
+        self.removed_session_cache = []
+        self.resumed_session_cache = []
 
         self.channel = None
         self.bid_window = 5
@@ -81,8 +83,16 @@ class SessionManager():
             return
 
         # Retrieve the canceled_order and put it into session manager
-        self.session_manager[sid] = self.canceled_session[sid]
+        self.add_session(self.canceled_session[sid])
         del self.canceled_session[sid]
+
+        self.resumed_session_cache.append({
+            "instrument_id": sid,
+            "message_type": "resume_order",
+            "remaining_quantity": self.session_manager[sid].quantity,
+            "pnl": self.session_manager[sid].pnl
+        })
+
 
     def quote(self):
         # talk to market
@@ -126,7 +136,7 @@ class SessionManager():
             for sid in del_sid:
                 self.removeSession(sid, 'finished_order')
 
-            return_list = self.removed_session_cache + [quote_json]
+            return_list = self.resumed_session_cache + self.removed_session_cache + [quote_json]
             
             # For each order
             if self.session_manager:
@@ -143,6 +153,7 @@ class SessionManager():
 
             # Empty the removed session list
             self.removed_session_cache.clear()
+            self.resumed_session_cache.clear()
 
         # Reset start and stop flag
         self.start_flag.clear()
