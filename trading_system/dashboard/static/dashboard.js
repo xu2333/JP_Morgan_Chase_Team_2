@@ -616,6 +616,19 @@ JPTrader.init = function(){
   this.quoteData = Array(243);
   this.quoteData.fill(0);
 
+
+  // set delegate for all collapse button
+  const leftCol = document.getElementsByClassName("right-col")[0];
+  console.log(leftCol);
+
+  leftCol.addEventListener("click", function(e){
+    if ( e.target.className === "collapse-row") {
+      console.log("delegate detected...");
+    } else {
+
+    }
+  });
+
   JPTrader.drawChart(100);
 
 };
