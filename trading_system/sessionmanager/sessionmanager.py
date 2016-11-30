@@ -29,6 +29,15 @@ class SessionManager(threading.Thread):
         self.start_flag = threading.Event()
         self.stop_flag = threading.Event()
 
+    def reset(self):
+        # Stop trading
+        self.stop_flag.set()
+
+        self.session_manager = {}
+        self.removed_session = []
+        self.channel = None
+
+
     def set_channel(self, channel):
         if not self.channel:
             self.channel = channel
@@ -71,10 +80,11 @@ class SessionManager(threading.Thread):
 
         return quote_message, price
 
-    def stop_trade_thread(self):
-        self.stop_flag.set()
-
     def run(self):
+
+        # Clear the stop flag at the beginning
+        if self.stop_flag.is_set():
+            self.stop_flag.clear()
 
         while not self.stop_flag.is_set():
 
@@ -108,6 +118,11 @@ class SessionManager(threading.Thread):
 
             # Empty the removed session list
             del self.removed_session[:]
+
+        # Reset start and stop flag
+        self.start_flag.clear()
+        self.stop_flag.clear()
+
 
 class Session(object):
     def __init__(self, session_id, quantity, order_size, order_discount):
@@ -195,14 +210,16 @@ class Session(object):
 
         return message
 
+def ws_disconnect(message):
+    sm.reset()
+
+
 def ws_message(message):
     # ASGI WebSocket packet-received and send-packet message types
     # both have a "text" key for their textual data.
     '''
     This function checks the format of information received from the frontend and 
     execute different functions including 
-    1. Initialize a session
-    2. ... = =?
     '''
     print("Message received")
     print(message.content)
