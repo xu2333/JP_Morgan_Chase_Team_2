@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from channels.handler import AsgiHandler
 
 # imported from client.py, but these are python 2.7 libraries
 # replace urllib2 with urllib.request
@@ -8,7 +7,7 @@ from channels.handler import AsgiHandler
 from urllib import request
 
 import time
-import json, csv
+import json
 import random
 import threading
 
@@ -236,6 +235,8 @@ def ws_message(message):
 
     if not sm.start_flag.is_set():
         sm.start_flag.set()
+
+        # Start the thread
         sm.thread.start()
 
     if content['request_type'] == 'order_request':
@@ -249,21 +250,22 @@ def ws_message(message):
         print("quantity: {}".format(quantity))
         print("order_discount: {}".format(order_discount))
 
-        # start a session
-        # init with parameters Quantity, size, time?
+        # Set the channel
         sm.set_channel(message.reply_channel)
 
+        # Init a session instance
         session = Session( instrument_id, quantity, order_size, order_discount)
 
+        # Add the session instance to the Session Manager
         sm.add_session(instrument_id, session)
     
     elif content['request_type'] == 'cancel_request':
-
         instrument_id = content['instrument_id']
 
         sm.removeSession(instrument_id, 'canceled_order')
 
 
 # Create SessionManager instance
+# This is called (only once) when init the system
 sm = SessionManager()
 
