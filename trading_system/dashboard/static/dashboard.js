@@ -12,7 +12,9 @@ let JPTrader = {
   // this array gives you direct access to each orderWrap <div> element by using its instrument_id as index.
   orderDOM: [],
 
-  haveFirstQuote: false 
+  haveFirstQuote: false,
+  totalQuantity: 0,
+  totalPnL: 0
 
 };
 
@@ -80,10 +82,9 @@ Refactored function for testing, this is the real checking part.
 */
 JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
   
-  // console.log('in _validateCollectedOrderInput');
-  quantity = parseInt(quantity);
+  quantity  = parseInt(quantity);
   orderSize = parseInt(orderSize);
-  discount = parseInt(discount);
+  discount  = parseInt(discount);
 
   const errorMessage = [];
 
@@ -110,7 +111,6 @@ JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
     console.log(result);
     return result;
   }
-
 }
 
 /**
@@ -135,7 +135,6 @@ JPTrader.validateOrderInput = function(){
     return result;
 
   }
-
 }
 
 /**
@@ -174,7 +173,6 @@ JPTrader.sendWithSocket = function( orderData ){
       this.ws.send( JSON.stringify(cancelRequest) );
     };
     cancelButton.addEventListener("click", cancel.bind(this));
-
 
     const resumeButton = document.createElement("button");
     resumeButton.textContent = "Resume Order";
@@ -242,7 +240,6 @@ JPTrader.sendWithSocket = function( orderData ){
     orderWrap.appendChild( customizeButton );
     orderWrap.appendChild( progressTable );
     
-
     // render this order
     // const orderList = document.querySelector(".right-col");
     const orderList = document.getElementById("order-list");
@@ -262,6 +259,9 @@ JPTrader.sendWithSocket = function( orderData ){
     // put this order into current order arrays so we can keep track of it
     this.currentOrders.push({
       "instrument_id": orderData["instrument_id"],
+      "quantity": orderData["quantity"],
+      "remaining_quantity": orderData["quantity"],
+      "pnl": 0,
       "handler": dataHandler
     });
 
@@ -345,8 +345,13 @@ JPTrader.initWebSocket = function( callback ){
             for (let i = 0; i < _currentOrders.length; i++) {
               if ( _currentOrders[i]["instrument_id"] == message["instrument_id"].toString() ) {
                 _currentOrders[i].handler(message);
+                break;
               }
             };
+
+            // update the aggregate view here.
+            JPTrader._updateAggregateView();
+
             break;
 
           case "resume_order":
@@ -399,19 +404,15 @@ div tag, and saved in the currentOrder array. this keyword in this function shou
 JPTrader.dataHandler = function( d ){
   
   // this in this function should be a div of order-wrap class
-  let dataType = d['message_type'];
+  const dataType = d['message_type'];
   let timestamp = d['timestamp'];
-
 
   // select the table to insert rows on data update
   let tableBody = this.querySelector("tbody.p");
 
   console.log('dataType:' + dataType );
-
-  if ( dataType === "quote" ){
-    // code doesn't come here...
-
-  } else if ( dataType === "sold_message" ){
+  
+  if ( dataType === "sold_message" ){
 
     let soldPrice = d['sold_price'];
     let remainingQuantity = d['remaining_quantity'];
@@ -419,11 +420,20 @@ JPTrader.dataHandler = function( d ){
     const instrumentId = +d["instrument_id"];
     const orderWrap = JPTrader.orderDOM[instrumentId];
 
+    // update the data into JPTrader
+    console.log("trying to update order object...");
+    const order = JPTrader.currentOrders.find(order => order.instrument_id == instrumentId);
+    console.log(order);
+    order.pnl = pnl;
+    order.remainingQuantity = remainingQuantity;
+    console.log(JPTrader.currentOrders);
+
+
     tableBody.innerHTML = JPTrader._tableRowHelper( soldPrice, remainingQuantity, parseFloat(pnl).toFixed(2) ) + tableBody.innerHTML;
 
     // update the table body to show only the latest latest trade-detail
     if ( orderWrap.dataset.collapse === "true" ) {
-      const detailRows = Array.prototype.slice.apply(tableBody.querySelectorAll("tr.trade-detail"));
+      const detailRows = Array.prototype.slice.apply( tableBody.querySelectorAll("tr.trade-detail") );
       detailRows.forEach(function(row){
         row.style.display = "none";
       });
@@ -436,15 +446,21 @@ JPTrader.dataHandler = function( d ){
     if ( remainingQuantity === 0 ){
 
       const indexToRemove = JPTrader.currentOrders.findIndex(function( ele ){
-        return ele['instrument_id'] === instrumentId;
+        return ele['instrument_id'] == instrumentId;
       });
 
       try {
 
         JPTrader._removeCancelButton(instrumentId);
         JPTrader._removeResumeButton(instrumentId);
+
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
+
+          console.log(`Instrument Id that we should move: ${instrumentId}`);
+          console.log(objectToMove);
+          console.log("==================================================");
+
           JPTrader.finishedOrders.push(objectToMove);  
         }
 
@@ -746,6 +762,47 @@ JPTrader._collapseTradeDetailHandler = function(e){
   
 }
 
+/**
+In this function we update the aggregate value of all orders including orders from
+current, canceled and finished array.
+*/
+JPTrader._updateAggregateView = function(){
+  let totalSoldQuantity = 0;
+  let totalPnL = 0;
+
+  // totalPnL += this.currentOrders.reduce( (agg, next) => (agg + next.pnl), 0);
+  // totalPnL += this.finishedOrders.reduce( (agg, next) => (agg + next.pnl), 0);
+  // totalPnL += this.canceledOrders.reduce( (agg, next) => (agg + next.pnl), 0);
+
+  this.currentOrders.forEach(order => {
+    totalPnL += order.pnl;
+    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+  });
+
+  this.finishedOrders.forEach(order => {
+    totalPnL += order.pnl;
+    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+  });
+
+  this.canceledOrders.forEach(order => {
+    totalPnL += order.pnl;
+    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+  });
+
+  const aggregateSoldTD = document.getElementById("aggregate-tqs");
+  aggregateSoldTD.textContent = totalSoldQuantity;
+
+  const aggregatePnLTD = document.getElementById("aggregate-tpnl");
+  aggregatePnLTD.textContent = totalPnL;
+
+  console.log(`new total pnl is: ${totalPnL}`);
+  console.log(`new total sold is: ${totalSoldQuantity}`);
+
+
+}
+
+
+
 
 /**
 A function to setup all the interactions, linkage and connections
@@ -777,7 +834,7 @@ JPTrader.init = function(){
   const orderList = document.getElementById("order-list");
   orderList.addEventListener( "click", this._collapseTradeDetailHandler );
 
-  JPTrader.drawChart(100);
+  // JPTrader.drawChart(100);
   JPTrader.getID = idGenerator();
 
 };
