@@ -275,6 +275,7 @@ def ws_message(message):
     instrument_id = content['instrument_id']
 
     if request_type == 'order_request':
+
         quantity = int(content['quantity'])
         order_size = int(content['order_size'])
         order_discount = int(content['order_discount'])
@@ -297,6 +298,12 @@ def ws_message(message):
 
     elif request_type == 'resume_request':
         sm.resume_canceled_session(instrument_id)
+
+    elif request_type == 'customize_request':
+        order_size = int(content['order_size'])
+        order_discount = int(content['order_discount'])
+        sm.session_manager[instrument_id].order_size = order_size;
+        sm.session_manager[instrument_id].order_discount = order_discount;
 
 
 # Create SessionManager instance

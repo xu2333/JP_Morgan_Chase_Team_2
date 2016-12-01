@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+  <title>Index</title>
+
+  <style type="text/css">
+    body {
+      padding-top: 40px;
+      padding-bottom: 40px;
+      background-color: #f5f5f5;
+    }
+
+    .form-signin {
+      max-width: 300px;
+      padding: 39px 59px 59px;
+      margin: 0 auto 20px;
+      background-color: #fff;
+      border: 1px solid #e5e5e5;
+      -webkit-border-radius: 5px;
+         -moz-border-radius: 5px;
+              border-radius: 5px;
+      -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+         -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+              box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    .form-signin .form-signin-heading,
+    .form-signin .checkbox {
+      margin-bottom: 10px;
+    }
+    .form-signin input[type="text"],
+    .form-signin input[type="password"] {
+      font-size: 16px;
+      height: auto;
+      margin-bottom: 15px;
+      padding: 7px 9px;
+    }
+  </style>
+</head>
+
+<body>
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+          &times;
+        </button>
+        <h4 class="modal-title" id="myModalLabel">
+          Customize Your Strategy
+        </h4>
+      </div>
+      <div class="modal-body">
+        <form>
+          <input type="text" class="input-block-level form-control" placeholder="Order size" id="new_order_size">
+          <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="new_discount"> 
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel
+        </button>
+        <button type="button" class="btn btn-primary">
+          Submit
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal -->
+</div>
+
+
+<script type="text/javascript">$(function() {
+      $('#myModal').modal('show')
+    });</script>
+
+
+
+
+  <div class="container">
+    <form class="form-signin" method="POST" action="/">
+    {% csrf_token %}
+      <h2 class="form-signin-heading">Please sign in</h2>
+      <input type="text" class="input-block-level" placeholder="Username" name="username">
+      <input type="password" class="input-block-level" placeholder="Password" name="password"> 
+
+      <button class="btn btn-large btn-primary" type="submit">Sign in</button>
+    </form>
+    <a href="/users/register/"><button class="btn btn-large btn-success">Sign up</button></a>
+    
+
+
+
+  </div> 
+  <!-- <script src="/boostrap/js/jquery.js"></script> -->
+</body>
+
+
+<button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">Customize</button>
+
+
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
