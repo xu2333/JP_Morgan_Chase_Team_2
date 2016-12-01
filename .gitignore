@@ -95,5 +95,5 @@ ENV/
 0000*
 
 # MAC specific files
-**/.DS_Store
+#**/.DS_Store
 *.DS_Store

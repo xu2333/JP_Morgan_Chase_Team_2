@@ -54,8 +54,6 @@ JPTrader._clearForm = function(){
   document.getElementById("order_size").value = "";
 }
 
-
-
 /**
 Refactored function for testing, seperate collecting data from user and the real checking part
 @param {None}
@@ -72,8 +70,6 @@ JPTrader._collectOrderInput = function(){
   return [quantity, orderSize, discount];
 
 }
-
-
 
 /**
 Refactored function for testing, this is the real checking part. 
@@ -117,8 +113,6 @@ JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
 
 }
 
-
-
 /**
 Validate form value, include checking missing data and mal-format data.
 @return {JSON} result - will only return a json object if all input are validated, otherwise, return null.
@@ -144,7 +138,6 @@ JPTrader.validateOrderInput = function(){
 
 }
 
-
 /**
 A function that checks the existence of websocket, if not init, init it. Otherwise, use it.
 @param {None}
@@ -166,6 +159,7 @@ JPTrader.sendWithSocket = function( orderData ){
     // title_label.innerHTML = document.getElementById("instrument_id").value;
     titleLabel.className = "order-title";
 
+    // cancel button
     const cancelButton = document.createElement("button");
     cancelButton.innerHTML = "Cancel Order";
     cancelButton.classList.add("cancel-button");
@@ -180,6 +174,7 @@ JPTrader.sendWithSocket = function( orderData ){
       this.ws.send( JSON.stringify(cancelRequest) );
     };
     cancelButton.addEventListener("click", cancel.bind(this));
+
 
     const resumeButton = document.createElement("button");
     resumeButton.textContent = "Resume Order";
@@ -197,6 +192,31 @@ JPTrader.sendWithSocket = function( orderData ){
       this.ws.send( JSON.stringify(resumeRequest) );
     }
     resumeButton.addEventListener("click", resume.bind(this));
+
+    // customize button
+    const customizeButton = document.createElement("button");
+    customizeButton.innerHTML = "Customize Strategy";
+    customizeButton.classList.add("custermize-button");
+    customizeButton.classList.add("btn");
+    customizeButton.classList.add("btn-primary");
+    customizeButton.setAttribute("data-toggle", "modal");
+    customizeButton.setAttribute("data-target", "#myModal");
+    $('#stock_id').val(orderData["instrument_id"]);
+
+    let customize = function(){
+        const customizeRequest = {
+        "request_type": "customize_request",
+        "instrument_id": $("#stock_id").val(),
+        "order_size" : $("#new_order_size").val(),
+        "order_discount" : $("#new_discount").val(),
+      };
+
+      console.log(customizeRequest);
+
+      this.ws.send(JSON.stringify(customizeRequest));
+      $('#myModal').modal('hide')
+    } 
+    document.getElementById("customize_btn").addEventListener("click",  customize.bind(this));
 
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
@@ -219,7 +239,9 @@ JPTrader.sendWithSocket = function( orderData ){
     orderWrap.appendChild( chartWrap );
     orderWrap.appendChild( cancelButton );
     orderWrap.appendChild( resumeButton );
+    orderWrap.appendChild( customizeButton );
     orderWrap.appendChild( progressTable );
+    
 
     // render this order
     // const orderList = document.querySelector(".right-col");
@@ -734,6 +756,7 @@ JPTrader.init = function(){
   if ( document.getElementById("make-order-btn") === null ) return;
 
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
+
   
   window.onbeforeunload = function(){
     JPTrader.ws.close();
