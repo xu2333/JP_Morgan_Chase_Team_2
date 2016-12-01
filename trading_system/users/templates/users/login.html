@@ -45,43 +45,6 @@
 <body>
 
 
-<!-- Modal -->
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-          &times;
-        </button>
-        <h4 class="modal-title" id="myModalLabel">
-          Customize Your Strategy
-        </h4>
-      </div>
-      <div class="modal-body">
-        <form>
-          <input type="text" class="input-block-level form-control" placeholder="Order size" id="new_order_size">
-          <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="new_discount"> 
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel
-        </button>
-        <button type="button" class="btn btn-primary">
-          Submit
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal -->
-</div>
-
-
-<script type="text/javascript">$(function() {
-      $('#myModal').modal('show')
-    });</script>
-
-
-
-
   <div class="container">
     <form class="form-signin" method="POST" action="/">
     {% csrf_token %}
