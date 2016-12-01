@@ -94,3 +94,6 @@ ENV/
 # db files
 0000*
 
+# MAC specific files
+.DS_Store
+
