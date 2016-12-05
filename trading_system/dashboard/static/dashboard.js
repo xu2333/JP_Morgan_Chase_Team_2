@@ -14,7 +14,10 @@ let JPTrader = {
 
   haveFirstQuote: false,
   totalQuantity: 0,
-  totalPnL: 0
+  totalPnL: 0,
+
+  // this will be set once we start receiving quotes
+  updateDeltaBoxesToken: null
 
 };
 
@@ -216,6 +219,10 @@ JPTrader.sendWithSocket = function( orderData ){
     } 
     document.getElementById("customize_btn").addEventListener("click",  customize.bind(this));
 
+    const deltaBox = document.createElement("div");
+    deltaBox.setAttribute("class", "delta-box");
+
+
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
 
@@ -238,6 +245,7 @@ JPTrader.sendWithSocket = function( orderData ){
     orderWrap.appendChild( cancelButton );
     orderWrap.appendChild( resumeButton );
     orderWrap.appendChild( customizeButton );
+    orderWrap.appendChild( deltaBox );
     orderWrap.appendChild( progressTable );
     
     // render this order
@@ -262,7 +270,8 @@ JPTrader.sendWithSocket = function( orderData ){
       "quantity": orderData["quantity"],
       "remaining_quantity": orderData["quantity"],
       "pnl": 0,
-      "handler": dataHandler
+      "handler": dataHandler,
+      "last_price": null
     });
 
     // set the collapse attribute so when a user want to see detail of a trade
@@ -330,6 +339,21 @@ JPTrader.initWebSocket = function( callback ){
 
               JPTrader.drawChart( +message["quote"] );
               JPTrader.haveFirstQuote = true;
+
+              // setup a time interval to update all the order's delta box values.
+              JPTrader.updateDeltaBoxesToken = setInterval(function updateDeltaBoxes(){
+
+                const lastQuote = JPTrader.quoteData[JPTrader.quoteData.length-1];
+                // console.log('in the update delta boxes function...');
+                // console.log(this);
+
+                const lastQuoteObject = {lastQuote: lastQuote};
+
+                JPTrader.currentOrders.forEach(  JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+                JPTrader.finishedOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+                JPTrader.canceledOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+
+              }, 1000);
             
             }
 
@@ -405,7 +429,7 @@ JPTrader.dataHandler = function( d ){
   
   // this in this function should be a div of order-wrap class
   const dataType = d['message_type'];
-  let timestamp = d['timestamp'];
+  const timestamp = d['timestamp'];
 
   // select the table to insert rows on data update
   let tableBody = this.querySelector("tbody.p");
@@ -416,17 +440,21 @@ JPTrader.dataHandler = function( d ){
 
     let soldPrice = d['sold_price'];
     let remainingQuantity = d['remaining_quantity'];
+
+    console.log(d);
+
     const pnl = +d["pnl"];
     const instrumentId = +d["instrument_id"];
     const orderWrap = JPTrader.orderDOM[instrumentId];
 
-    // update the data into JPTrader
+    // update the data into JPTrader currentOrders...
     console.log("trying to update order object...");
     const order = JPTrader.currentOrders.find(order => order.instrument_id == instrumentId);
-    console.log(order);
+    // console.log(order);
     order.pnl = pnl;
     order.remainingQuantity = remainingQuantity;
-    console.log(JPTrader.currentOrders);
+    order.last_price = soldPrice;
+    // console.log(JPTrader.currentOrders);
 
 
     tableBody.innerHTML = JPTrader._tableRowHelper( soldPrice, remainingQuantity, parseFloat(pnl).toFixed(2) ) + tableBody.innerHTML;
@@ -767,41 +795,67 @@ In this function we update the aggregate value of all orders including orders fr
 current, canceled and finished array.
 */
 JPTrader._updateAggregateView = function(){
+  
   let totalSoldQuantity = 0;
   let totalPnL = 0;
 
-  // totalPnL += this.currentOrders.reduce( (agg, next) => (agg + next.pnl), 0);
-  // totalPnL += this.finishedOrders.reduce( (agg, next) => (agg + next.pnl), 0);
-  // totalPnL += this.canceledOrders.reduce( (agg, next) => (agg + next.pnl), 0);
-
-  this.currentOrders.forEach(order => {
+  this.currentOrders.forEach( order => {
     totalPnL += order.pnl;
-    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+    totalSoldQuantity += ( order.quantity - order.remainingQuantity );
   });
 
-  this.finishedOrders.forEach(order => {
+  this.finishedOrders.forEach( order => {
     totalPnL += order.pnl;
-    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+    totalSoldQuantity += ( order.quantity - order.remainingQuantity );
   });
 
-  this.canceledOrders.forEach(order => {
+  this.canceledOrders.forEach( order => {
     totalPnL += order.pnl;
-    totalSoldQuantity += (order.quantity - order.remainingQuantity);
+    totalSoldQuantity += ( order.quantity - order.remainingQuantity );
   });
 
   const aggregateSoldTD = document.getElementById("aggregate-tqs");
   aggregateSoldTD.textContent = totalSoldQuantity;
 
-  const aggregatePnLTD = document.getElementById("aggregate-tpnl");
-  aggregatePnLTD.textContent = totalPnL;
-
-  console.log(`new total pnl is: ${totalPnL}`);
-  console.log(`new total sold is: ${totalSoldQuantity}`);
-
+  const aggregatePnLTD  = document.getElementById("aggregate-tpnl");
+  aggregatePnLTD.textContent  = totalPnL;
 
 }
 
 
+/**
+A function that takes an order object, and this value binded with an 
+last quote object with only one key "lastQuote". This function updates its delta box value.
+
+*/
+JPTrader._updateDeltaBox = function(order){
+
+  console.log('what is the this in here...');
+  console.log(this);
+
+  // get the delta : ( last quote - this order's last order price )
+  const instrumentId = order.instrument_id;
+
+  // if this parent order doesn't have any successful sold order yet, we don't show anything.
+  if ( order.last_price === null ) return;
+  const delta = this.lastQuote - order.last_price;
+
+  // update the text and color correspondingly
+  const orderWrap = JPTrader.orderDOM[instrumentId];
+  const deltaBox = orderWrap.querySelector(".delta-box");
+  deltaBox.textContent = Math.abs(delta).toFixed(3);
+  console.log(delta);
+  
+  if ( delta > 0 ) { 
+    deltaBox.classList.add("pos-delta");
+    deltaBox.classList.remove("neg-delta");
+  }
+  else {
+    deltaBox.classList.add("neg-delta");
+    deltaBox.classList.remove("pos-delta");
+  }
+
+}
 
 
 /**
