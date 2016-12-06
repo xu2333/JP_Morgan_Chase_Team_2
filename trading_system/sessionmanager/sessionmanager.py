@@ -42,7 +42,10 @@ class SessionManager():
 
         _users = User.objects.all()
         # use username instead of uid here.
-        self.user = User.objects.get(username=uid)
+        self.user = User.objects.get(id=uid)
+        print("in set user...")
+        print(self.user)
+        print(self.user.id)
 
     def save_order(self, quantity, order_size, order_discount, sid):
         order = OrderHistory.create(quantity, order_size, order_discount, self.user)
@@ -87,8 +90,8 @@ class SessionManager():
         self.removed_session_cache.append({
             "instrument_id": sid,
             "message_type": remove_type,
-            "remaining_quantity": ses.quantity,
-            "pnl": ses.pnl
+            "remaining_quantity": session.quantity,
+            "pnl": session.pnl
             })
 
         # Backup the canceled order for resuming and restarting
@@ -303,7 +306,7 @@ def ws_message(message):
             
             # Get the user id and
             user_id = content['user_id']
-            print("user id: " + user_id)
+            print("user id: " + str(user_id) )
             sm.set_user(user_id)
             
             # Start the thread

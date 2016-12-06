@@ -319,7 +319,7 @@ JPTrader.initWebSocket = function( callback ){
       // I created a super user called cw2897 here...
       const initMessage = {
         "request_type": "init_system",
-        "user_id": "cw2897"
+        "user_id": 1
       };
 
       JPTrader.ws.send( JSON.stringify(initMessage) );
