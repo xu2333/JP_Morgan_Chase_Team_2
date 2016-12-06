@@ -39,7 +39,10 @@ class SessionManager():
         self.thread = threading.Thread(target=self.run)
 
     def set_user(self, uid):
-        self.user = User.objects.get(id=uid)
+
+        _users = User.objects.all()
+        # use username instead of uid here.
+        self.user = User.objects.get(username=uid)
 
     def save_order(self, quantity, order_size, order_discount, sid):
         order = OrderHistory.create(quantity, order_size, order_discount, self.user)
@@ -291,6 +294,7 @@ def ws_message(message):
     request_type = content['request_type']
 
     if request_type == 'init_system':
+
         if not sm.start_flag.is_set():
             sm.start_flag.set()
             
@@ -299,6 +303,7 @@ def ws_message(message):
             
             # Get the user id and
             user_id = content['user_id']
+            print("user id: " + user_id)
             sm.set_user(user_id)
             
             # Start the thread

@@ -301,6 +301,8 @@ Will be called if the socket is not initialized
 */
 JPTrader.initWebSocket = function( callback ){
 
+  if ( this.ws != null ) return;
+
   if ( "WebSocket" in window ){
 
     // open a websocket
@@ -311,14 +313,18 @@ JPTrader.initWebSocket = function( callback ){
       // send init message request so the server will start sending quote
       // also to bind user id to this session so the server knows which trader
       // this is.
+
+      console.log("on open message sent...?");
+
+      // I created a super user called cw2897 here...
       const initMessage = {
-        "message_type": "init_system",
+        "request_type": "init_system",
         "user_id": "cw2897"
       };
 
       JPTrader.ws.send( JSON.stringify(initMessage) );
 
-      callback();
+      if ( callback )  callback();
 
 
     };
@@ -894,6 +900,8 @@ JPTrader.init = function(){
 
   // JPTrader.drawChart(100);
   JPTrader.getID = idGenerator();
+
+  this.initWebSocket();
 
 };
 
