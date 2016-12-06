@@ -691,6 +691,9 @@ $(function () {
         }
       }
     },
+    credits: {
+      enabled: false
+    },
     title: {
       text: 'ETF Quote'
     },
@@ -710,10 +713,7 @@ $(function () {
     },
     tooltip: {
       formatter: function () {
-        /*'<b>' + this.series.name + '</b>'*/ /*'<br/>' + */
-        return Highcharts.dateFormat('%H:%M:%S', this.x) +
-              '<br/> quote:' +
-              Highcharts.numberFormat(this.y, 2);
+        return Highcharts.dateFormat('%H:%M:%S', this.x) + '<br/> quote:' + Highcharts.numberFormat(this.y, 2);
       }
     },
     legend: {
@@ -725,12 +725,9 @@ $(function () {
     series: [{
       name: 'ETF',
       data: (function () {
-
         var data = [];
         const time = (new Date(firstQuote["timestamp"])).getTime();
-        // console.log(`the time we get in drawchart is... ${time}`);
         let i;
-           
         for ( i = -59; i <= 0; i += 1 ) {
           data.push({
             x: time + i * 1000,
