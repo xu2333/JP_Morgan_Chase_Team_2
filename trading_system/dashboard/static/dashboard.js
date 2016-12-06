@@ -285,6 +285,7 @@ JPTrader.sendWithSocket = function( orderData ){
   };
 
   if ( typeof this.ws === 'undefined' ){
+    // start receiving quotes and draw charts...
     this.initWebSocket( sendMessageAndDisplayOrder.bind( this ) );
   } else {
     sendMessageAndDisplayOrder.call( this );
@@ -306,7 +307,20 @@ JPTrader.initWebSocket = function( callback ){
     this.ws = new WebSocket("ws://" + window.location.host + "/chat/");
 
     this.ws.onopen = function(){
+      
+      // send init message request so the server will start sending quote
+      // also to bind user id to this session so the server knows which trader
+      // this is.
+      const initMessage = {
+        "message_type": "init_system",
+        "user_id": "cw2897"
+      };
+
+      JPTrader.ws.send( JSON.stringify(initMessage) );
+
       callback();
+
+
     };
 
     this.ws.onmessage = function( evt ){ 
@@ -328,40 +342,47 @@ JPTrader.initWebSocket = function( callback ){
           case "quote":
 
             JPTrader.quoteData.push( message["quote"] );
+            console.log(message.timestamp);
 
-            /**************************************/
-            /********** WORK IN PROGRESS **********/
-            /**************************************/
-
-            // this is a bad implementation, consider sending quote data on start of application
-
+            // Execute on first received quote
+            // draw chart and set interval for updating delta.
             if ( !JPTrader.haveFirstQuote ) {
 
-              JPTrader.drawChart( +message["quote"] );
-              JPTrader.haveFirstQuote = true;
+              (function setupOnFirstQuote(){
 
-              // setup a time interval to update all the order's delta box values.
-              JPTrader.updateDeltaBoxesToken = setInterval(function updateDeltaBoxes(){
+                JPTrader.drawChart( message );
 
-                const lastQuote = JPTrader.quoteData[JPTrader.quoteData.length-1];
-                // console.log('in the update delta boxes function...');
-                // console.log(this);
+                // setup a time interval to update all the order's delta box values.
+                JPTrader.updateDeltaBoxesToken = setInterval(function updateDeltaBoxes(){
 
-                const lastQuoteObject = {lastQuote: lastQuote};
+                  const lastQuote = JPTrader.quoteData[JPTrader.quoteData.length-1];
+                  const lastQuoteObject = {lastQuote: lastQuote};
 
-                JPTrader.currentOrders.forEach(  JPTrader._updateDeltaBox.bind(lastQuoteObject) );
-                JPTrader.finishedOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
-                JPTrader.canceledOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+                  JPTrader.currentOrders.forEach(  JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+                  JPTrader.finishedOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
+                  JPTrader.canceledOrders.forEach( JPTrader._updateDeltaBox.bind(lastQuoteObject) );
 
-              }, 1000);
+                }, 1000);
+
+                // avoid coming back in
+                JPTrader.haveFirstQuote = true;
+
+              })();
             
             }
+            else {
+              // console.log(`in this part with timestamp: ${ (new Date(message["timestamp"])).getTime() }`);
+              const series = JPTrader.quoteChart.series[0];
+              series.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quote"]) ], true, true);
+            }
+
+            
 
             break;
 
           case "sold_message":
 
-            console.log('Received an order from server');
+            console.log('Received a sold_message...');
             console.log(message);
             // find corresponding handler from current orders array
             const _currentOrders = JPTrader.currentOrders;
@@ -650,96 +671,81 @@ Plot the forever going chart for this stock
 @return {undefined}
 */
 JPTrader.drawChart = function( firstQuote ){
+       
+$(function () {
+  $(document).ready(function () {
+    Highcharts.setOptions({
+      global: {
+        useUTC: false
+      }
+  });
+            
+  JPTrader.quoteChart = Highcharts.chart('chartContainer', {
+    chart: {
+      type: 'spline',
+      animation: Highcharts.svg,
+      marginRight: 10,
+      events: {
+        load: function () {
+          // do something after the chart is rendered.
+        }
+      }
+    },
+    title: {
+      text: 'ETF Quote'
+    },
+    xAxis: {
+      type: 'datetime',
+      tickPixelInterval: 150
+    },
+    yAxis: {
+      title: {
+        text: 'Price'
+      },
+      plotLines: [{
+        value: 0,
+        width: 1,
+        color: '#808080'
+      }]
+    },
+    tooltip: {
+      formatter: function () {
+        /*'<b>' + this.series.name + '</b>'*/ /*'<br/>' + */
+        return Highcharts.dateFormat('%H:%M:%S', this.x) +
+              '<br/> quote:' +
+              Highcharts.numberFormat(this.y, 2);
+      }
+    },
+    legend: {
+      enabled: false
+    },
+    exporting: {
+      enabled: false
+    },
+    series: [{
+      name: 'ETF',
+      data: (function () {
 
-  var n = 243,
-      duration = 1000,
-      now = new Date(Date.now() - duration),
-      count = 0;
-  let dataLength = JPTrader.quoteData.length;
-  let data = JPTrader.quoteData.slice(dataLength - n);
-  console.log(data);
+        var data = [];
+        const time = (new Date(firstQuote["timestamp"])).getTime();
+        // console.log(`the time we get in drawchart is... ${time}`);
+        let i;
+           
+        for ( i = -59; i <= 0; i += 1 ) {
+          data.push({
+            x: time + i * 1000,
+            y: 0
+          });
+        }
+        return data;
+      }())
+    }]
+  });
+  });
+});
 
-  var margin = {top: 6, right: 0, bottom: 20, left: 40},
-      width = 960 - margin.right,
-      height = 190 - margin.top - margin.bottom;
 
-  var x = d3.time.scale()
-      .domain([now - (n - 2) * duration, now - duration])
-      .range([0, width]);
 
-  var y = d3.scale.linear()
-      .range([height, 0]);
-
-  var line = d3.svg.line()
-      // .interpolate("basis")
-      .x(function(d, i) { return x(now - (n - 1 - i) * duration); })
-      .y(function(d, i) { return y(d); });
-
-  var svg = d3.select("#quote-chart-wrap").select("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .style("margin-left", margin.left + "px")
-    .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-  svg.append("defs").append("clipPath")
-      .attr("id", "clip")
-    .append("rect")
-      .attr("width", width)
-      .attr("height", height);
-
-  var axis = svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
-
-  var path = svg.append("g")
-      .attr("clip-path", "url(#clip)")
-    .append("path")
-      .datum(data)
-      .attr("class", "line");
-
-  var transition = d3.select({}).transition()
-      .duration(duration)
-      .ease("linear");
-
-  d3.select(window)
-      .on("scroll", function() { ++count; });
-
-  (function tick() {
-
-    transition = transition.each(function() {
-      
-      // update the domains
-      now = new Date();
-      x.domain([now - (n - 2) * duration, now - duration]);
-      
-      // y.domain([0, d3.max(data)]);
-      y.domain([firstQuote - 12, firstQuote + 12]);
-
-      // push the accumulated count onto the back, and reset the count
-      data.push(JPTrader.quoteData.slice(-1)[0]);
-
-      count = 0;
-
-      // redraw the line
-      svg.select(".line")
-          .attr("d", line)
-          .attr("transform", null);
-
-      // slide the x-axis left
-      axis.call(x.axis);
-
-      // slide the line left
-      path.transition()
-          .attr("transform", "translate(" + x(now - (n - 1) * duration) + ")");
-
-      // pop the old data point off the front
-      data.shift();
-
-    }).transition().each("start", tick);
-
-  })();
 }
 
 
@@ -826,12 +832,13 @@ JPTrader._updateAggregateView = function(){
 /**
 A function that takes an order object, and this value binded with an 
 last quote object with only one key "lastQuote". This function updates its delta box value.
-
+@param {Object} order
+@return {undefined}
 */
 JPTrader._updateDeltaBox = function(order){
 
-  console.log('what is the this in here...');
-  console.log(this);
+  // console.log('what is the this in here...');
+  // console.log(this);
 
   // get the delta : ( last quote - this order's last order price )
   const instrumentId = order.instrument_id;
@@ -844,7 +851,7 @@ JPTrader._updateDeltaBox = function(order){
   const orderWrap = JPTrader.orderDOM[instrumentId];
   const deltaBox = orderWrap.querySelector(".delta-box");
   deltaBox.textContent = Math.abs(delta).toFixed(3);
-  console.log(delta);
+  // console.log(delta);
   
   if ( delta > 0 ) { 
     deltaBox.classList.add("pos-delta");
