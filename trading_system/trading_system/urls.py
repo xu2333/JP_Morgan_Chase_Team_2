@@ -21,4 +21,5 @@ urlpatterns = [
     url(r'^dashboard/', include('dashboard.urls')),
     url(r'^$', include('users.urls')),
     url(r'^users/', include('users.urls')),
+    url(r'^history/', include('history.urls')),
 ]

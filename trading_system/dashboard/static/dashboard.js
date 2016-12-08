@@ -903,6 +903,24 @@ JPTrader.init = function(){
     JPTrader.ws.close();
   }
 
+  // check whether the user has logged in
+  // save user name and id in the JPTrader object
+  const _username = localStorage.getItem("username");
+  const _userid = localStorage.getItem("userid");
+  if ( !_username ) {
+
+    /***********************/
+    //  WORK IN PROGRESS   //
+    /***********************/
+    
+    // we can redirect the user back to log in page...
+    // but that shouldn't happen tho
+
+    alert("the user hasn't logged in yet...");
+  }
+  this.username = _username;
+  this.userid = _userid;
+
   this.quoteData = Array(243);
   this.quoteData.fill(0);
 

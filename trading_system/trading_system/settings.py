@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'dashboard',
     'channels',
     'users',
+    'history',
 ]
 
 MIDDLEWARE = [

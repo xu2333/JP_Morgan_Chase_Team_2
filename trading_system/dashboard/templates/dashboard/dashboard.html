@@ -110,17 +110,16 @@
 
 
 
-
-<script type="text/javascript" src="{% static 'dashboard.js' %}"></script>
 <script type="text/javascript">
-	
-// d3.json()
-
-{% autoescape off %}
-// var data = {{apple}}
-{% endautoescape %}
-
+  const _username = "{{username}}";
+  const _userid = {{ userid }};
+  localStorage.setItem("username", _username);
+  localStorage.setItem("userid", _userid);
 </script>
+<script type="text/javascript" src="{% static 'dashboard.js' %}"></script>
+
+  
+
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
