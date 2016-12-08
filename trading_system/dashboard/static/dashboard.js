@@ -36,8 +36,17 @@ JPTrader.makeOrder = function(){
   // generate an ID
   let orderId = this.getID.next().value;
   console.log(`new order id is: ${orderId}`);
+  console.log(orderInput);
   orderId = orderId.toString();
   orderInput["instrument_id"] = orderId;
+
+  // calculate the duration of each child order
+  const quantity = orderInput["quantity"];
+  const childOrder = orderInput["order_size"];
+  const bidWindow = Math.floor(orderInput["sell_duration"]/ Math.ceil(quantity/childOrder) );
+  orderInput["bid_window"] = bidWindow;
+  // console.log(bidWindow);
+
 
   // set request type
   orderInput["request_type"] = "order_request";
@@ -57,6 +66,8 @@ JPTrader._clearForm = function(){
   document.getElementById("quantity").value   = "";
   document.getElementById("discount").value   = "";
   document.getElementById("order_size").value = "";
+  document.getElementById("sell_duration").value = "";
+
 }
 
 /**
@@ -71,8 +82,9 @@ JPTrader._collectOrderInput = function(){
   let quantity = document.getElementById("quantity").value;
   let orderSize = document.getElementById("order_size").value;
   let discount = document.getElementById("discount").value;
+  let timeDuration = document.getElementById("sell_duration").value;
 
-  return [quantity, orderSize, discount];
+  return [quantity, orderSize, discount, timeDuration];
 
 }
 
@@ -83,11 +95,12 @@ Refactored function for testing, this is the real checking part.
 @param {Number} discount
 @return {JSON/Array} result/ errorMessage 
 */
-JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
+JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount, sellDuration){
   
   quantity  = parseInt(quantity);
   orderSize = parseInt(orderSize);
   discount  = parseInt(discount);
+  sellDuration = parseInt(sellDuration);
 
   const errorMessage = [];
 
@@ -98,6 +111,7 @@ JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
   if ( orderSize > quantity ) errorMessage.push("Your child order size is bigger than total");
   if ( isNaN(discount) ) errorMessage.push("Your discount is not a valid number");
   if ( discount < 0 || discount > 100 ) errorMessage.push("Your discount should in 0-100");
+  if ( isNaN(sellDuration) ) errorMessage.push("Your sellDuration is not valid");
 
   if ( errorMessage.length > 0 ) {
     
@@ -108,7 +122,8 @@ JPTrader._validateCollectedOrderInput = function(quantity, orderSize, discount){
     const result = {
       "order_discount": discount,
       "order_size": orderSize,
-      "quantity": quantity
+      "quantity": quantity,
+      "sell_duration": sellDuration
     };
 
     console.log(result);
@@ -348,7 +363,7 @@ JPTrader.initWebSocket = function( callback ){
           case "quote":
 
             JPTrader.quoteData.push( message["quote"] );
-            console.log(message.timestamp);
+            // console.log(message.timestamp);
 
             // Execute on first received quote
             // draw chart and set interval for updating delta.
