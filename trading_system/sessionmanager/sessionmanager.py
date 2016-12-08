@@ -26,7 +26,6 @@ class SessionManager():
 
         self.channel = None
         self.user_id = None
-        self.bid_window = 5
         # Server API URLs
         self.QUERY = "http://localhost:8080/query?id={}"
         self.ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
@@ -52,11 +51,13 @@ class SessionManager():
         self.stop_flag.set()
 
         # Save everything in the cache to database
-        for session in [self.session_manager.values() + self.canceled_session.values()]:
+        tmp = list(self.session_manager.values()) + list(self.canceled_session.values())
+        for session in tmp:
             status = 'Canceled'
-            sid = session.session_id
             # Update the order in the database
-            self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, pnl=session.pnl)
+            trading_logs = json.dumps(session.trading_logs)
+            self.sid_internal_mapping[session.session_id].update(status=status, remaining_quantity=session.quantity, 
+                pnl=session.pnl, trading_logs=trading_logs)
 
         # Reset cache to empty
         self.session_manager.clear()
@@ -153,7 +154,6 @@ class SessionManager():
             self.stop_flag.clear()
 
         while not self.stop_flag.is_set():
-
             # Pass by 1 second
             time.sleep(1)
             
@@ -170,15 +170,16 @@ class SessionManager():
             # For each order
             if self.session_manager:
                 for session in self.session_manager.values():
-                    order_json = session.trade(price)
+                    message_json = session.trade(price)
 
-                    if order_json:
-                        return_list.append(order_json)
+                    if message_json:
+                        return_list.append(message_json)
 
-            # Send the combined order execution list
-            self.channel.send({
-                "text": json.dumps(return_list)
-            })
+            if self.channel:
+                # Send the combined order execution list
+                self.channel.send({
+                    "text": json.dumps(return_list)
+                })
 
             # Empty the removed session list
             self.removed_session_cache.clear()
@@ -190,23 +191,30 @@ class SessionManager():
 
 
 class Session(object):
-    def __init__(self, session_id, quantity, order_size, order_discount):
+    def __init__(self, session_id, quantity, order_size, order_discount, bid_window=None):
         self.session_id = session_id
         self.quantity = quantity
         self.order_size = order_size
         self.order_discount = order_discount
 
+        # Store the original quantity
         self.ori_quantity = quantity
 
         # a value to return at the end of trade function
         self.pnl = 0
 
         # the time to break between each bid attempt
-        self.bid_window = 5
+        if bid_window:
+            self.bid_window = bid_window
+        else:
+            self.bid_window = 5 # Default bid_window
         self.step = 0
 
         # a paramter to terminate trading when the orders aren't complete yet
         self.terminate = False
+
+        # Store the trading logs
+        self.trading_logs = []
 
     def trade(self, price):
         '''
@@ -275,6 +283,9 @@ class Session(object):
 
                 message = unfilled_message
 
+        if message:
+            self.trading_logs.append(message)
+
         return message
 
 def ws_disconnect(message):
@@ -291,6 +302,9 @@ def ws_message(message):
     content = json.loads(message.content['text'])
     request_type = content['request_type']
 
+    print(content)
+    print(request_type)
+
     if request_type == 'init_system':
 
         if not sm.start_flag.is_set():
@@ -301,7 +315,6 @@ def ws_message(message):
             
             # Get the user id and
             user_id = content['user_id']
-            print("user id: " + str(user_id) )
             sm.set_user(user_id)
             
             # Start the thread
@@ -312,9 +325,11 @@ def ws_message(message):
 
         if request_type == 'order_request':
 
+            # Initialize order parameters
             quantity = int(content['quantity'])
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
+            # bid_window = int(content['bid_window']) # First defined bid_window --> might need to expedite 
 
             # Init a session instance
             session = Session(instrument_id, quantity, order_size, order_discount)

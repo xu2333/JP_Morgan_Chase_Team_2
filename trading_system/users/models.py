@@ -12,6 +12,8 @@ class OrderHistory(models.Model):
     order_size = models.IntegerField(validators=[MinValueValidator(0)])
     order_discount = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])
 
+    # Detail trading log
+    trading_logs = models.TextField(null=True)
     remaining_quantity = models.IntegerField(validators=[MinValueValidator(0)], null=True)
     pnl = models.FloatField(validators=[MinValueValidator(0)], null=True)
 
@@ -28,7 +30,8 @@ class OrderHistory(models.Model):
         order_record.save()
         return order_record
 
-    def update(self, status=None, remaining_quantity=None, pnl=None, order_size=None, order_discount=None):
+    def update(self, status=None, remaining_quantity=None, pnl=None, order_size=None, order_discount=None,
+            trading_logs=None):
         if status:
             self.status = status
 
@@ -43,8 +46,14 @@ class OrderHistory(models.Model):
 
         if order_discount:
             self.order_discount = order_discount
+
+        if trading_logs:
+            self.trading_logs = trading_logs
         
         self.save()
 
     def __str__(self):
         return 'status = {}, user = {}'.format(self.status, self.user.username)
+
+
+
