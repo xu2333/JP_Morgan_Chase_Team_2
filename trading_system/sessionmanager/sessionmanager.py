@@ -51,7 +51,8 @@ class SessionManager():
         self.stop_flag.set()
 
         # Save everything in the cache to database
-        for session in [self.session_manager.values() + self.canceled_session.values()]:
+        tmp = list(self.session_manager.values()) + list(self.canceled_session.values())
+        for session in tmp:
             status = 'Canceled'
             # Update the order in the database
             trading_logs = json.dumps(session.trading_logs)
@@ -153,7 +154,6 @@ class SessionManager():
             self.stop_flag.clear()
 
         while not self.stop_flag.is_set():
-
             # Pass by 1 second
             time.sleep(1)
             
@@ -175,10 +175,11 @@ class SessionManager():
                     if message_json:
                         return_list.append(message_json)
 
-            # Send the combined order execution list
-            self.channel.send({
-                "text": json.dumps(return_list)
-            })
+            if self.channel:
+                # Send the combined order execution list
+                self.channel.send({
+                    "text": json.dumps(return_list)
+                })
 
             # Empty the removed session list
             self.removed_session_cache.clear()
@@ -300,6 +301,9 @@ def ws_message(message):
     '''
     content = json.loads(message.content['text'])
     request_type = content['request_type']
+
+    print(content)
+    print(request_type)
 
     if request_type == 'init_system':
 
