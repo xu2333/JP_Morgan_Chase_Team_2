@@ -72,3 +72,24 @@ img[src$='more.png']{
   height: 24px;
 }
 
+
+div.delta-box{
+  display: inline-block;
+  float: right;
+}
+
+div.pos-delta{
+  color: green;
+}
+
+div.neg-delta{
+  color: red;
+}
+
+div.neg-delta:before{
+  content: "(";
+}
+div.neg-delta:after{
+  content: ")";
+}
+

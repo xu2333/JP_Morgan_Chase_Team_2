@@ -11,16 +11,21 @@ import json
 import random
 import threading
 
+from users.models import OrderHistory
+from django.contrib.auth.models import User
+
 class SessionManager():
     def __init__(self):
         # Internal memory
         self.session_manager = {}
         self.canceled_session = {}
+        self.sid_internal_mapping = {}
 
         self.removed_session_cache = []
         self.resumed_session_cache = []
 
         self.channel = None
+        self.user_id = None
         self.bid_window = 5
         # Server API URLs
         self.QUERY = "http://localhost:8080/query?id={}"
@@ -33,14 +38,33 @@ class SessionManager():
         # Create a thread
         self.thread = threading.Thread(target=self.run)
 
+    def set_user(self, uid):
+        # use username instead of uid here.
+        self.user = User.objects.get(id=uid)
+
+    def save_order(self, quantity, order_size, order_discount, sid):
+        order = OrderHistory.create(quantity, order_size, order_discount, self.user)
+
+        self.sid_internal_mapping[sid] = order
+
     def reset(self):
         # Stop the current trading thread
         self.stop_flag.set()
 
-        # Reset memory
+        # Save everything in the cache to database
+        for session in [self.session_manager.values() + self.canceled_session.values()]:
+            status = 'Canceled'
+            sid = session.session_id
+            # Update the order in the database
+            self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, pnl=session.pnl)
+
+        # Reset cache to empty
         self.session_manager.clear()
-        self.removed_session_cache.clear()
         self.canceled_session.clear()
+
+        self.removed_session_cache.clear()
+        self.resumed_session_cache.clear()
+
         self.channel = None
 
         # Re-create a thread
@@ -56,17 +80,24 @@ class SessionManager():
         if sid not in self.session_manager:
             return
 
+        session = self.session_manager[sid]
+
         self.removed_session_cache.append({
             "instrument_id": sid,
             "message_type": remove_type,
-            "remaining_quantity": self.session_manager[sid].quantity,
-            "pnl": self.session_manager[sid].pnl
+            "remaining_quantity": session.quantity,
+            "pnl": session.pnl
             })
 
         # Backup the canceled order for resuming and restarting
         if remove_type == 'canceled_order':
-            self.canceled_session[sid] = self.session_manager[sid]
+            self.canceled_session[sid] = session
 
+        if remove_type == 'finished_order':
+            status = 'Finished'
+            # Update the order in the database
+            self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, pnl=session.pnl)
+        
         # Remove the session from the current session manager
         del self.session_manager[sid]
 
@@ -125,9 +156,7 @@ class SessionManager():
 
             # Pass by 1 second
             time.sleep(1)
-            if not self.channel:
-                continue
-
+            
             # Quote the market
             quote_json, price = self.quote()
 
@@ -231,7 +260,7 @@ class Session(object):
                 print("ID = {}, Sold {:,} for ${:,}/share, ${:,} notional".format(self.session_id, order_size, price, notional) )
                 print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
 
-                message = sold_message 
+                message = sold_message
             else:
                 unfilled_message = {
                         "instrument_id": self.session_id,
@@ -259,51 +288,54 @@ def ws_message(message):
     This function checks the format of information received from the frontend and 
     execute different functions including 
     '''
-    print("Message received")
-    print(message.content)
-
     content = json.loads(message.content['text'])
-    print(content)
-
-    if not sm.start_flag.is_set():
-        sm.start_flag.set()
-
-        # Start the thread
-        sm.thread.start()
-
     request_type = content['request_type']
-    instrument_id = content['instrument_id']
 
-    if request_type == 'order_request':
+    if request_type == 'init_system':
 
-        quantity = int(content['quantity'])
-        order_size = int(content['order_size'])
-        order_discount = int(content['order_discount'])
+        if not sm.start_flag.is_set():
+            sm.start_flag.set()
+            
+            # Set reply the channel
+            sm.set_channel(message.reply_channel)
+            
+            # Get the user id and
+            user_id = content['user_id']
+            print("user id: " + str(user_id) )
+            sm.set_user(user_id)
+            
+            # Start the thread
+            sm.thread.start()
 
-        print("order size: {}".format(order_size))
-        print("quantity: {}".format(quantity))
-        print("order_discount: {}".format(order_discount))
+    else:
+        instrument_id = content['instrument_id']
 
-        # Set the channel
-        sm.set_channel(message.reply_channel)
+        if request_type == 'order_request':
 
-        # Init a session instance
-        session = Session( instrument_id, quantity, order_size, order_discount)
+            quantity = int(content['quantity'])
+            order_size = int(content['order_size'])
+            order_discount = int(content['order_discount'])
 
-        # Add the session instance to the Session Manager
-        sm.add_session(instrument_id, session)
-    
-    elif request_type == 'cancel_request':
-        sm.removeSession(instrument_id, 'canceled_order')
+            # Init a session instance
+            session = Session(instrument_id, quantity, order_size, order_discount)
 
-    elif request_type == 'resume_request':
-        sm.resume_canceled_session(instrument_id)
+            # Save the order to data base
+            sm.save_order(quantity, order_size, order_discount, instrument_id)
 
-    elif request_type == 'customize_request':
-        order_size = int(content['order_size'])
-        order_discount = int(content['order_discount'])
-        sm.session_manager[instrument_id].order_size = order_size;
-        sm.session_manager[instrument_id].order_discount = order_discount;
+            # Add the session instance to the Session Manager
+            sm.add_session(instrument_id, session)
+        
+        elif request_type == 'cancel_request':
+            sm.removeSession(instrument_id, 'canceled_order')
+
+        elif request_type == 'resume_request':
+            sm.resume_canceled_session(instrument_id)
+
+        elif request_type == 'customize_request':
+            order_size = int(content['order_size'])
+            order_discount = int(content['order_discount'])
+            sm.session_manager[instrument_id].order_size = order_size;
+            sm.session_manager[instrument_id].order_discount = order_discount;
 
 
 # Create SessionManager instance
