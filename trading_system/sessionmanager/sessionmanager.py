@@ -39,13 +39,8 @@ class SessionManager():
         self.thread = threading.Thread(target=self.run)
 
     def set_user(self, uid):
-
-        _users = User.objects.all()
         # use username instead of uid here.
         self.user = User.objects.get(id=uid)
-        print("in set user...")
-        print(self.user)
-        print(self.user.id)
 
     def save_order(self, quantity, order_size, order_discount, sid):
         order = OrderHistory.create(quantity, order_size, order_discount, self.user)
