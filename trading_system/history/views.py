@@ -19,10 +19,13 @@ def history(request):
 	# orders = Order.objects.all()
 	print(orders)
 	
-	data = []
-	for o in orders:
-		data.append( serializers.serialize('json', [o] ) )
+	# data = []
+	# for o in orders:
+	# 	print(o)
+	# 	print(o.__class__.__name__)
+	# 	print()
+	# 	data.append( serializers.serialize('json', [o] ) )
 
-	print(data)
+	# print(data)
 
-	return render(request, 'history/history.html' , {orders: str(data)})
+	return render(request, 'history/history.html' , locals())

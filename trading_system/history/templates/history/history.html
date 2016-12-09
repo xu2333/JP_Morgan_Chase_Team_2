@@ -4,11 +4,32 @@
 		
 	</head>
 	<body>
-	
+		<table>
+			<thead>
+				<tr><td></td><td></td></tr>
+			</thead>
+			<tbody>
+			{% for order in orders %}
+			<tr>
+		        <td class='order quantity'>{{ order.fields.original_quantity }}</td>
+		        <td class='field'>{{ order.order_size }}</td>
+		    </tr>
+		    {% endfor %}
+		    </tbody>
+	    </table>
 
 	</body>
 	<script type="text/javascript">
-		var orders = {{orders}}
+
+		// [{"model": "users.orderhistory", "pk": 17, "fields": {"original_quantity": 1000, "order_size": 200, "order_discount": 5.0, "trading_logs": null, "remaining_quantity": 1000, "pnl": 0.0, "status": "In_Progress", "user": 1}}]
+		// {% autoescape on %}
+		// var orders = {{orders}};
+		// {% endautoescape %}
+		
+
+
+		// orders = JSON.parse(orders);
+		// console.log(orders);
 	</script>
 
 </html>

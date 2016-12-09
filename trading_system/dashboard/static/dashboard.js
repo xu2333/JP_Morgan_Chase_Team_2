@@ -353,8 +353,22 @@ JPTrader.initWebSocket = function( callback ){
       /********************/
       /* WORK IN PROGRESS */
       /********************/
-      /** Recieve different kind of information from server should be done here */
+      if ( JPTrader.quoteChart ) {
+        const soldSum = receivedMessage.reduce( (agg, next)=>{
+          if ( next["message_type"] == "sold_message" ) return agg + parseInt(next["sold_quantity"]);
+          return agg;
+        } ,0);
+        // doesn't look really reliable.
+        const firstTimeStamp = receivedMessage[0]["timestamp"];
+        const series1 = JPTrader.quoteChart.series[1];
 
+        console.log('add point');
+        console.log(`first timestamp: ${firstTimeStamp}, sold sum: ${soldSum}`);
+        series1.addPoint( [ (new Date(firstTimeStamp)).getTime(), soldSum ], true, true);  
+      }
+      
+
+      /** Recieve different kind of information from server should be done here */
       receivedMessage.forEach(function(message){
 
         const messageType = message['message_type'];
@@ -395,8 +409,6 @@ JPTrader.initWebSocket = function( callback ){
               // console.log(`in this part with timestamp: ${ (new Date(message["timestamp"])).getTime() }`);
               const series0 = JPTrader.quoteChart.series[0];
               series0.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quote"]) ], true, true);
-              const series1 = JPTrader.quoteChart.series[1];
-              series1.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quantity"]) ], true, true);
             
             }
 
@@ -778,10 +790,10 @@ $(function () {
         name: 'Volume',
         yAxis: 1,
         data: (function () {
-            var data2 = [],
+            var data2 = [];
             const time2 = (new Date(firstQuote["timestamp"])).getTime();
                
-            for (i = -59; i <= 0; i += 1) {
+            for (let i = -59; i <= 0; i += 1) {
                data2.push({
                     x: time2 + i * 1000,
                     y: 0
@@ -874,7 +886,7 @@ JPTrader._updateAggregateView = function(){
   aggregateSoldTD.textContent = totalSoldQuantity;
 
   const aggregatePnLTD  = document.getElementById("aggregate-tpnl");
-  aggregatePnLTD.textContent  = totalPnL;
+  aggregatePnLTD.textContent  = totalPnL.toFixed(2);
 
 }
 
