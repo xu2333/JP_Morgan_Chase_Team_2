@@ -8,6 +8,7 @@
 		<style type="text/css">
 			.detail-row{
 				display: none;
+				background-color: #D3D3D3;
 			}
 
 			.detail-row > td{
@@ -37,7 +38,7 @@
 			{% for order in json_orders %}
 				<tr class="order-row">
 					<td class='time'>2016.Dec.02</td>
-			        <td class='Original quantity'>{{ order.original_quantity }}</td>
+			        <td class='Total Sold quantity'>{{ order.total_sold_quantity }}</td>
 			        <td class='pnl'>{{ order.pnl }}</td>
 			        <td class='status'>{{ order.status }}</td>
 			    </tr>

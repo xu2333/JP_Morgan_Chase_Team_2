@@ -71,7 +71,8 @@ class OrderHistory(models.Model):
                 trading_logs = trading_logs,
                 order_size = self.order_size,
                 order_discount = self.order_discount,
-                remaining_quantity = self.remaining_quantity
+                remaining_quantity = self.remaining_quantity,
+                total_sold_quantity = self.original_quantity - self.remaining_quantity
                 )
 
     def __str__(self):
