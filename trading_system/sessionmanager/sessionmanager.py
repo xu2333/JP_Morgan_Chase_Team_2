@@ -390,7 +390,7 @@ def ws_message(message):
         elif request_type == 'customize_request':
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
-            total_time = int(content['sell_duration'])
+            total_time = int(content['order_duration'])
 
             sm.session_manager[instrument_id].order_size = order_size;
             sm.session_manager[instrument_id].order_discount = order_discount;
