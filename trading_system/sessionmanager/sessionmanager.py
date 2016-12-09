@@ -66,6 +66,7 @@ class SessionManager():
         self.removed_session_cache.clear()
         self.resumed_session_cache.clear()
 
+        # Reset channel --> last child order might be executed, but will not be sent to front-end
         self.channel = None
 
         # Re-create a thread
@@ -97,7 +98,9 @@ class SessionManager():
         if remove_type == 'finished_order':
             status = 'Finished'
             # Update the order in the database
-            self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, pnl=session.pnl)
+            trading_logs = json.dumps(session.trading_logs)
+            self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, 
+                                                pnl=session.pnl, trading_logs=trading_logs)
         
         # Remove the session from the current session manager
         del self.session_manager[sid]
@@ -191,7 +194,7 @@ class SessionManager():
 
 
 class Session(object):
-    def __init__(self, session_id, quantity, order_size, order_discount, bid_window=None):
+    def __init__(self, session_id, quantity, order_size, order_discount, total_time):
         self.session_id = session_id
         self.quantity = quantity
         self.order_size = order_size
@@ -199,22 +202,35 @@ class Session(object):
 
         # Store the original quantity
         self.ori_quantity = quantity
+        self.time = total_time
 
         # a value to return at the end of trade function
         self.pnl = 0
 
         # the time to break between each bid attempt
-        if bid_window:
-            self.bid_window = bid_window
-        else:
-            self.bid_window = 5 # Default bid_window
-        self.step = 0
+        self.set_bid_window()
+        self.step = 1
 
         # a paramter to terminate trading when the orders aren't complete yet
         self.terminate = False
 
         # Store the trading logs
         self.trading_logs = []
+
+    def set_bid_window(self):
+        '''
+        a function that determines bid_window by remaining_quantity and remaining_time
+        '''
+        execution_times = self.quantity // self.order_size
+        if self.quantity % self.order_size != 0:
+            execution_times += 1
+
+        self.bid_window = self.time // execution_times
+
+        # More child orders than remaining time
+        if self.bid_window == 0:
+            self.bid_window = 1 # Set to the minimum bid window
+
 
     def trade(self, price):
         '''
@@ -226,7 +242,6 @@ class Session(object):
         '''
 
         # Server API URLs
-        QUERY = "http://localhost:8080/query?id={}"
         ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
 
         message = None
@@ -235,58 +250,87 @@ class Session(object):
             self.terminate = True
             return message
 
-        if self.step < self.bid_window:
-            self.step += 1
+        # 1 second has passed --> update remaining time
+        self.time -= 1
+
+        # If time's up --> last second --> sell all shares
+        if self.time == 0:
+            order_size = self.quantity
+            sell_price = price * 0.5 # Hardcode here
+
+            message = self.execute_order(order_size, sell_price)
         else:
-            self.step = 0
-
-            # Attempt to execute a sell order. By only referencing the last price we retrieved
-            order_size = min(self.quantity, self.order_size)
-            order_args = (order_size, price * (1 - float(self.order_discount) / 100))
-
-            url   = ORDER.format(random.random(), *order_args)
-            order = json.loads(request.urlopen(url).read().decode("utf-8"))
-
-            # Update the PnL if the order was filled.
-            if order['avg_price'] > 0:
-                price    = order['avg_price']
-                notional = float(price * order_size)
-                self.pnl += notional
-                self.quantity -= order_size
-                
-                sold_message = {
-                        "instrument_id": self.session_id,
-                        "message_type": "sold_message",
-                        "quote": "",
-                        "timestamp": order['timestamp'],
-                        "remaining_quantity": self.quantity,
-                        "sold_quantity": order_size,
-                        "sold_price": price,
-                        "pnl": self.pnl
-                    }
-
-                print("ID = {}, Sold {:,} for ${:,}/share, ${:,} notional".format(self.session_id, order_size, price, notional) )
-                print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
-
-                message = sold_message
+            # If meets an order execution time
+            if self.step < self.bid_window:
+                self.step += 1
             else:
-                unfilled_message = {
-                        "instrument_id": self.session_id,
-                        "message_type": "unfilled_order",
-                        "quote": "",
-                        "timestamp": order['timestamp'],
-                        "remaining_quantity": self.quantity,
-                        "sold_quantity": "",
-                        "sold_price": "",
-                        "pnl": self.pnl 
-                    }
+                self.step = 1
 
-                message = unfilled_message
+                # Attempt to execute a sell order. By only referencing the last price we retrieved
+                order_size = min(self.quantity, self.order_size)
+                sell_price = price * (1 - float(self.order_discount) / 100)
+
+                message = self.execute_order(order_size, sell_price)
 
         if message:
             self.trading_logs.append(message)
 
         return message
+
+    def execute_order(self, order_size, sell_price):
+        message = None
+
+        # Server API URLs
+        ORDER = "http://localhost:8080/order?id={}&side=sell&qty={}&price={}"
+
+        # Attempt to execute a sell order. By only referencing the last price we retrieved
+        order_args = (order_size, sell_price)
+
+        url   = ORDER.format(random.random(), *order_args)
+        order = json.loads(request.urlopen(url).read().decode("utf-8"))
+
+        # Update the PnL if the order was filled.
+        if order['avg_price'] > 0:
+            price    = order['avg_price']
+            notional = float(price * order_size)
+            self.pnl += notional
+            self.quantity -= order_size
+            
+            sold_message = {
+                    "instrument_id": self.session_id,
+                    "message_type": "sold_message",
+                    "quote": "",
+                    "timestamp": order['timestamp'],
+                    "remaining_quantity": self.quantity,
+                    "sold_quantity": order_size,
+                    "sold_price": price,
+                    "pnl": self.pnl
+                }
+
+            print("ID = {}, Sold {:,} for ${:,}/share, ${:,} notional".format(self.session_id, order_size, price, notional) )
+            print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
+
+            message = sold_message
+        else:
+            unfilled_message = {
+                    "instrument_id": self.session_id,
+                    "message_type": "unfilled_order",
+                    "quote": "",
+                    "timestamp": order['timestamp'],
+                    "remaining_quantity": self.quantity,
+                    "sold_quantity": "",
+                    "sold_price": "",
+                    "pnl": self.pnl 
+                }
+
+
+            # Reset the bid_window if an unfilled order occurs
+            self.set_bid_window()
+
+            message = unfilled_message
+
+        return message
+
 
 def ws_disconnect(message):
     sm.reset()
@@ -301,9 +345,6 @@ def ws_message(message):
     '''
     content = json.loads(message.content['text'])
     request_type = content['request_type']
-
-    print(content)
-    print(request_type)
 
     if request_type == 'init_system':
 
@@ -329,10 +370,10 @@ def ws_message(message):
             quantity = int(content['quantity'])
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
-            # bid_window = int(content['bid_window']) # First defined bid_window --> might need to expedite 
+            total_time = int(content['sell_duration'])
 
             # Init a session instance
-            session = Session(instrument_id, quantity, order_size, order_discount)
+            session = Session(instrument_id, quantity, order_size, order_discount, total_time)
 
             # Save the order to data base
             sm.save_order(quantity, order_size, order_discount, instrument_id)
@@ -349,8 +390,14 @@ def ws_message(message):
         elif request_type == 'customize_request':
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
+            total_time = int(content['order_duration'])
+
             sm.session_manager[instrument_id].order_size = order_size;
             sm.session_manager[instrument_id].order_discount = order_discount;
+            sm.session_manager[instrument_id].time = total_time;
+
+            # Reset bid_window
+            sm.session_manager[instrument_id].set_bid_window()
 
 
 # Create SessionManager instance
