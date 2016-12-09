@@ -18,9 +18,10 @@ def history(request):
 	orders = OrderHistory.objects.filter(user=user)
 	# orders = Order.objects.all()
 	print(orders)
-	
+	username = user.username;
 	# data = []
 	# for o in orders:
+	# 	o['test_attribute'] = 100;
 	# 	print(o)
 	# 	print(o.__class__.__name__)
 	# 	print()

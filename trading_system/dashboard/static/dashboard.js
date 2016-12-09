@@ -353,6 +353,8 @@ JPTrader.initWebSocket = function( callback ){
       /********************/
       /* WORK IN PROGRESS */
       /********************/
+
+      // update chart sold volume (bar chart) only after the chart is initialized
       if ( JPTrader.quoteChart ) {
         const soldSum = receivedMessage.reduce( (agg, next)=>{
           if ( next["message_type"] == "sold_message" ) return agg + parseInt(next["sold_quantity"]);
@@ -362,8 +364,8 @@ JPTrader.initWebSocket = function( callback ){
         const firstTimeStamp = receivedMessage[0]["timestamp"];
         const series1 = JPTrader.quoteChart.series[1];
 
-        console.log('add point');
-        console.log(`first timestamp: ${firstTimeStamp}, sold sum: ${soldSum}`);
+        // console.log('add point');
+        // console.log(`first timestamp: ${firstTimeStamp}, sold sum: ${soldSum}`);
         series1.addPoint( [ (new Date(firstTimeStamp)).getTime(), soldSum ], true, true);  
       }
       

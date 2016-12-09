@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+		<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<style type="text/css">
+
+		</style>
 	</head>
 	<body>
-		<table>
+
+	<div id="history-table-wrap" class="container">
+		<h1>History Orders of {{username}}</h1>
+		<table class="table table-striped">
 			<thead>
-				<tr><td></td><td></td></tr>
+				<tr>
+					<td>Time</td>
+					<td>Sold Quantity</td>
+					<td>PnL</td>
+					<td>Status</td>
+				</tr>
 			</thead>
 			<tbody>
 			{% for order in orders %}
 			<tr>
-		        <td class='order quantity'>{{ order.fields.original_quantity }}</td>
-		        <td class='field'>{{ order.order_size }}</td>
+				<td class='time'>2016.Dec.02</td>
+		        <td class='Original quantity'>{{ order.original_quantity }}</td>
+		        <td class='pnl'>{{ order.pnl }}</td>
+		        <td class='status'>{{ order.status }}</td>
 		    </tr>
 		    {% endfor %}
 		    </tbody>
 	    </table>
-
-	</body>
-	<script type="text/javascript">
-
-		// [{"model": "users.orderhistory", "pk": 17, "fields": {"original_quantity": 1000, "order_size": 200, "order_discount": 5.0, "trading_logs": null, "remaining_quantity": 1000, "pnl": 0.0, "status": "In_Progress", "user": 1}}]
-		// {% autoescape on %}
-		// var orders = {{orders}};
-		// {% endautoescape %}
+	</div>
 		
 
+	</body>
 
-		// orders = JSON.parse(orders);
-		// console.log(orders);
-	</script>
-
+	{# [{"model": "users.orderhistory", "pk": 17, "fields": {"original_quantity": 1000, "order_size": 200, "order_discount": 5.0, "trading_logs": null, "remaining_quantity": 1000, "pnl": 0.0, "status": "In_Progress", "user": 1}}] #}
 </html>
