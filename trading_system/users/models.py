@@ -38,22 +38,22 @@ class OrderHistory(models.Model):
 
     def update(self, status=None, remaining_quantity=None, pnl=None, order_size=None, order_discount=None,
             trading_logs=None):
-        if status:
+        if status is not None:
             self.status = status
 
-        if remaining_quantity:
+        if remaining_quantity is not None:
             self.remaining_quantity = remaining_quantity
 
-        if pnl:
+        if pnl is not None:
             self.pnl = pnl
 
-        if order_size:
+        if order_size is not None:
             self.order_size = order_size
 
-        if order_discount:
+        if order_discount is not None:
             self.order_discount = order_discount
 
-        if trading_logs:
+        if trading_logs is not None:
             self.trading_logs = trading_logs
         
         self.save()
