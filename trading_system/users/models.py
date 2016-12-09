@@ -8,12 +8,16 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 # Create your models here.
 class OrderHistory(models.Model):
 
+    # Initial information
     original_quantity = models.IntegerField(validators=[MinValueValidator(0)])
     order_size = models.IntegerField(validators=[MinValueValidator(0)])
     order_discount = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    initial_time = models.CharField(max_length=255, null=True)
 
     # Detail trading log
     trading_logs = models.TextField(null=True)
+
+    # Order execution summary
     remaining_quantity = models.IntegerField(validators=[MinValueValidator(0)], null=True)
     pnl = models.FloatField(validators=[MinValueValidator(0)], null=True)
 
@@ -23,10 +27,10 @@ class OrderHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     @classmethod
-    def create(cls, quantity, order_size, order_discount, user):
+    def create(cls, quantity, order_size, order_discount, initial_time, user):
         order_record = cls(original_quantity=quantity, order_size=order_size,
-            order_discount=order_discount, remaining_quantity=quantity, pnl=0, status='In_Progress',
-            user=user)
+            order_discount=order_discount, remaining_quantity=quantity, initial_time=initial_time,
+            pnl=0, status='In_Progress', user=user)
         order_record.save()
         return order_record
 
