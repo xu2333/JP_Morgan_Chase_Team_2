@@ -257,6 +257,8 @@ class Session(object):
         if self.time == 0:
             order_size = self.quantity
             sell_price = price * 0.5 # Hardcode here
+
+            message = self.execute_order(order_size, sell_price)
         else:
             # If meets an order execution time
             if self.step < self.bid_window:
@@ -268,51 +270,7 @@ class Session(object):
                 order_size = min(self.quantity, self.order_size)
                 sell_price = price * (1 - float(self.order_discount) / 100)
 
-        message = self.execute_order(order_size, sell_price)
-
-        # order_args = (order_size, price * (1 - float(self.order_discount) / 100))
-
-        # url   = ORDER.format(random.random(), *order_args)
-        # order = json.loads(request.urlopen(url).read().decode("utf-8"))
-
-        # # Update the PnL if the order was filled.
-        # if order['avg_price'] > 0:
-        #     price    = order['avg_price']
-        #     notional = float(price * order_size)
-        #     self.pnl += notional
-        #     self.quantity -= order_size
-            
-        #     sold_message = {
-        #             "instrument_id": self.session_id,
-        #             "message_type": "sold_message",
-        #             "quote": "",
-        #             "timestamp": order['timestamp'],
-        #             "remaining_quantity": self.quantity,
-        #             "sold_quantity": order_size,
-        #             "sold_price": price,
-        #             "pnl": self.pnl
-        #         }
-
-        #     print("ID = {}, Sold {:,} for ${:,}/share, ${:,} notional".format(self.session_id, order_size, price, notional) )
-        #     print("PnL ${:,}, Qty {:,}".format(self.pnl, self.quantity))
-
-        #     message = sold_message
-        # else:
-        #     unfilled_message = {
-        #             "instrument_id": self.session_id,
-        #             "message_type": "unfilled_order",
-        #             "quote": "",
-        #             "timestamp": order['timestamp'],
-        #             "remaining_quantity": self.quantity,
-        #             "sold_quantity": "",
-        #             "sold_price": "",
-        #             "pnl": self.pnl 
-        #         }
-
-        #     # Reset the bid_window if an unfilled order occurs
-        #     self.set_bid_window()
-
-        #     message = unfilled_message
+                message = self.execute_order(order_size, sell_price)
 
         if message:
             self.trading_logs.append(message)
@@ -412,8 +370,7 @@ def ws_message(message):
             quantity = int(content['quantity'])
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
-            # total_time = int(content['total_time'])
-            total_time = 60
+            total_time = int(content['sell_duration'])
 
             # Init a session instance
             session = Session(instrument_id, quantity, order_size, order_discount, total_time)
@@ -433,10 +390,11 @@ def ws_message(message):
         elif request_type == 'customize_request':
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
-            # total_time = int(content['total_time'])
+            total_time = int(content['sell_duration'])
 
             sm.session_manager[instrument_id].order_size = order_size;
             sm.session_manager[instrument_id].order_discount = order_discount;
+            sm.session_manager[instrument_id].time = total_time;
 
             # Reset bid_window
             sm.session_manager[instrument_id].set_bid_window()
