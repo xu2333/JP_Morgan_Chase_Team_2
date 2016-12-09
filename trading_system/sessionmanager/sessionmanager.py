@@ -38,10 +38,16 @@ class SessionManager():
         self.thread = threading.Thread(target=self.run)
 
     def set_user(self, uid):
-        # use username instead of uid here.
+        '''
+        A function that gets user object from database by user id
+        '''
         self.user = User.objects.get(id=uid)
 
     def save_order(self, session):
+        '''
+        A function that saves the initial order information into database.
+        Some fields are empty here and will be populated later
+        '''
         order = OrderHistory.create(session.ori_quantity, session.order_size, 
                                     session.order_discount, session.init_timestamp, self.user)
 
@@ -53,6 +59,14 @@ class SessionManager():
 
 
     def reset(self):
+        '''
+        A function that resets the current session mananger process.
+            1. Kill the running thread
+            2. Save updated order information into database
+            3. Clear all the memory
+            4. Create a new thread
+        '''
+
         # Stop the current trading thread
         self.stop_flag.set()
 
@@ -399,9 +413,6 @@ def ws_message(message):
 
             # Init a session instance
             session = Session(instrument_id, quantity, order_size, order_discount, total_time)
-
-            # Save the order to data base
-            # sm.save_order(quantity, order_size, order_discount, instrument_id)
 
             # Add the session instance to the Session Manager
             sm.add_session(instrument_id, session)
