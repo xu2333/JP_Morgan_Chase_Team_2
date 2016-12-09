@@ -97,3 +97,7 @@ ENV/
 # MAC specific files
 #**/.DS_Store
 *.DS_Store
+
+trading_system/users/.DS_Store
+
+trading_system/users/templates/.DS_Store

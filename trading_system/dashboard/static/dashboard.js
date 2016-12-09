@@ -393,8 +393,11 @@ JPTrader.initWebSocket = function( callback ){
             }
             else {
               // console.log(`in this part with timestamp: ${ (new Date(message["timestamp"])).getTime() }`);
-              const series = JPTrader.quoteChart.series[0];
-              series.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quote"]) ], true, true);
+              const series0 = JPTrader.quoteChart.series[0];
+              series0.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quote"]) ], true, true);
+              const series1 = JPTrader.quoteChart.series[1];
+              series1.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quantity"]) ], true, true);
+            
             }
 
             
@@ -703,7 +706,7 @@ $(function () {
             
   JPTrader.quoteChart = Highcharts.chart('chartContainer', {
     chart: {
-      type: 'spline',
+      // type: 'spline',
       animation: Highcharts.svg,
       marginRight: 10,
       events: {
@@ -722,7 +725,7 @@ $(function () {
       type: 'datetime',
       tickPixelInterval: 150
     },
-    yAxis: {
+    yAxis: [{
       title: {
         text: 'Price'
       },
@@ -731,11 +734,23 @@ $(function () {
         width: 1,
         color: '#808080'
       }]
-    },
+    },{
+        title: {
+            text: 'Volumn',
+            style: {
+                color: Highcharts.getOptions().colors[1]
+            }
+        },
+        opposite: true
+    }
+    ],
     tooltip: {
+      /*
       formatter: function () {
         return Highcharts.dateFormat('%H:%M:%S', this.x) + '<br/> quote:' + Highcharts.numberFormat(this.y, 2);
       }
+      */
+      shared: true
     },
     legend: {
       enabled: false
@@ -744,6 +759,7 @@ $(function () {
       enabled: false
     },
     series: [{
+      type: 'spline',
       name: 'ETF',
       data: (function () {
         var data = [];
@@ -757,6 +773,22 @@ $(function () {
         }
         return data;
       }())
+    },{
+        type: 'column',
+        name: 'Volume',
+        yAxis: 1,
+        data: (function () {
+            var data2 = [],
+            const time2 = (new Date(firstQuote["timestamp"])).getTime();
+               
+            for (i = -59; i <= 0; i += 1) {
+               data2.push({
+                    x: time2 + i * 1000,
+                    y: 0
+                });
+            }
+            return data2;
+        }())
     }]
   });
   });
