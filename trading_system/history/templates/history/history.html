@@ -6,31 +6,57 @@
 		<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
 		<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		<style type="text/css">
+			.detail-row{
+				display: none;
+			}
 
+			.detail-row > td{
+				padding: 3px 3px 3px 8px !important;
+			}
+
+			tr.order-row{
+				cursor: pointer;
+			}
 		</style>
 	</head>
 	<body>
 
 	<div id="history-table-wrap" class="container">
 		<h1>History Orders of {{username}}</h1>
-		<table class="table table-striped">
+		<table class="table table-hover" id="history-table">
 			<thead>
 				<tr>
 					<td>Time</td>
 					<td>Sold Quantity</td>
 					<td>PnL</td>
 					<td>Status</td>
+					{# <td>Logs</td> #}
 				</tr>
 			</thead>
 			<tbody>
-			{% for order in orders %}
-			<tr>
-				<td class='time'>2016.Dec.02</td>
-		        <td class='Original quantity'>{{ order.original_quantity }}</td>
-		        <td class='pnl'>{{ order.pnl }}</td>
-		        <td class='status'>{{ order.status }}</td>
-		    </tr>
+			{% for order in json_orders %}
+				<tr class="order-row">
+					<td class='time'>2016.Dec.02</td>
+			        <td class='Original quantity'>{{ order.original_quantity }}</td>
+			        <td class='pnl'>{{ order.pnl }}</td>
+			        <td class='status'>{{ order.status }}</td>
+			    </tr>
+
+			    {% if order.trading_logs %}
+					    <tr class="detail-header detail-row"><td>Sold Quantity</td><td>Sold Price</td><td>Timestamp</td><td>Message Type</td></tr>
+					    {% for log in order.trading_logs %}
+					    	<tr class="detail-body detail-row">
+					    		<td> {{ log.sold_quantity }} </td>
+					    		<td> {{ log.sold_price }} </td>
+					    		<td> {{ log.timestamp }} </td>
+					    		<td> {{ log.message_type }} </td>
+					    	</tr>
+						{% endfor %}
+
+				{% endif %}
+
 		    {% endfor %}
+
 		    </tbody>
 	    </table>
 	</div>
@@ -38,5 +64,49 @@
 
 	</body>
 
-	{# [{"model": "users.orderhistory", "pk": 17, "fields": {"original_quantity": 1000, "order_size": 200, "order_discount": 5.0, "trading_logs": null, "remaining_quantity": 1000, "pnl": 0.0, "status": "In_Progress", "user": 1}}] #}
+	<script type="text/javascript">
+		// [{"model": "users.orderhistory", "pk": 17, 
+	    //            "fields": {"original_quantity": 1000, "initial_time": 182319201,
+		//		                 "order_size": 200, "order_discount": 5.0, "trading_logs": null, 
+		//                       "remaining_quantity": 1000, "pnl": 0.0, "status": "In_Progress", 
+		//                       "user": 1}}]
+
+		// implement an on click listener for the table and check if the clicked row is 
+		// a common row and show all the rows in between this common row and next common row.
+		
+
+		document.getElementById("history-table").addEventListener("click", function tableRowDelegate(e){
+
+			console.log('table row delegate clicked...');
+
+			// the row that we want to expand detail
+			let rowToShowDetail = e.target;
+			console.log(rowToShowDetail.parentNode)
+			while ( rowToShowDetail.tagName !== "TR") { 
+				if ( rowToShowDetail === null ) return;
+				rowToShowDetail = rowToShowDetail.parentNode;
+			}
+
+			// if it is a detail row, we don't do anything
+			if ( rowToShowDetail.classList.contains("detail-row") ) return;
+
+			let nextRow = rowToShowDetail.nextElementSibling;
+
+			// return if there is not detail to show for this element
+			if ( !nextRow.classList.contains("detail-row") ) return; 
+
+			// since there are detail to show, we want to know whether they are already hidden or not
+			let targetStyle = (nextRow.style.display !== "table-row")?"table-row":"none";
+
+			// find all the rows below that are not of the class common rows
+			while( nextRow.classList.contains("detail-row") ) {
+				nextRow.style.display = targetStyle;
+				nextRow = nextRow.nextElementSibling;
+				if (nextRow === null) return;
+			}
+
+		});
+
+	</script>
+	
 </html>

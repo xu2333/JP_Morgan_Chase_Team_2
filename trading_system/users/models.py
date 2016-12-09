@@ -5,6 +5,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+import json
+
 # Create your models here.
 class OrderHistory(models.Model):
 
@@ -51,6 +53,22 @@ class OrderHistory(models.Model):
             self.trading_logs = trading_logs
         
         self.save()
+
+    def as_json(self):
+
+        if self.trading_logs:
+            trading_logs = json.loads(self.trading_logs)
+        else:
+            trading_logs = []
+
+        return dict(
+                status = self.status,
+                pnl = self.pnl,
+                trading_logs = trading_logs,
+                order_size = self.order_size,
+                order_discount = self.order_discount,
+                remaining_quantity = self.remaining_quantity
+                )
 
     def __str__(self):
         return 'status = {}, user = {}'.format(self.status, self.user.username)
