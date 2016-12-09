@@ -41,10 +41,16 @@ class SessionManager():
         # use username instead of uid here.
         self.user = User.objects.get(id=uid)
 
-    def save_order(self, quantity, order_size, order_discount, sid):
-        order = OrderHistory.create(quantity, order_size, order_discount, self.user)
+    def save_order(self, session):
+        order = OrderHistory.create(session.ori_quantity, session.order_size, 
+                                    session.order_discount, session.init_timestamp, self.user)
 
-        self.sid_internal_mapping[sid] = order
+        # Save the database model instance
+        self.sid_internal_mapping[session.session_id] = order
+
+        # Update session status
+        session.saved = True
+
 
     def reset(self):
         # Stop the current trading thread
@@ -130,17 +136,20 @@ class SessionManager():
 
 
     def quote(self):
-        # talk to market
+        '''
+        A function that talks to market and gets back the quote
+        '''
         response = request.urlopen(self.QUERY.format(random.random())).read()
         
         quote = json.loads(response.decode("utf-8"))
         price = float(quote['top_bid']['price'])
-        
+        timestamp = quote['timestamp']
+
         quote_message = {
                 "instrument_id": '',
                 "message_type": "quote",
                 "quote": price,
-                "timestamp": quote['timestamp'],
+                "timestamp": timestamp,
                 
                 "remaining_quantity": 0,
                 "sold_quantity": "",
@@ -148,9 +157,13 @@ class SessionManager():
                 "pnl": 0
             }
 
-        return quote_message, price
+        return quote_message, price, timestamp
 
     def run(self):
+        '''
+        A function that defines the order execution process. 
+        It's used as an independent thread.
+        '''
 
         # Clear the stop flag at the beginning
         if self.stop_flag.is_set():
@@ -161,7 +174,7 @@ class SessionManager():
             time.sleep(1)
             
             # Quote the market
-            quote_json, price = self.quote()
+            quote_json, price, timestamp = self.quote()
 
             # remove the termiated session
             del_sid = [session.session_id for session in self.session_manager.values() if session.terminate]
@@ -173,6 +186,11 @@ class SessionManager():
             # For each order
             if self.session_manager:
                 for session in self.session_manager.values():
+
+                    session.set_init_tmestamp(timestamp)
+                    if not session.saved:
+                        self.save_order(session)
+
                     message_json = session.trade(price)
 
                     if message_json:
@@ -203,6 +221,7 @@ class Session(object):
         # Store the original quantity
         self.ori_quantity = quantity
         self.time = total_time
+        self.init_timestamp = None
 
         # a value to return at the end of trade function
         self.pnl = 0
@@ -211,11 +230,17 @@ class Session(object):
         self.set_bid_window()
         self.step = 1
 
-        # a paramter to terminate trading when the orders aren't complete yet
+        # Status paremeters
         self.terminate = False
+        self.saved = False
 
         # Store the trading logs
         self.trading_logs = []
+
+
+    def set_init_tmestamp(self, timestamp):
+        if not self.init_timestamp:
+            self.init_timestamp = timestamp
 
     def set_bid_window(self):
         '''
@@ -376,7 +401,7 @@ def ws_message(message):
             session = Session(instrument_id, quantity, order_size, order_discount, total_time)
 
             # Save the order to data base
-            sm.save_order(quantity, order_size, order_discount, instrument_id)
+            # sm.save_order(quantity, order_size, order_discount, instrument_id)
 
             # Add the session instance to the Session Manager
             sm.add_session(instrument_id, session)
