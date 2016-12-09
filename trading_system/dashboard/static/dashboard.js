@@ -225,6 +225,7 @@ JPTrader.sendWithSocket = function( orderData ){
         "instrument_id": $("#stock_id").val(),
         "order_size" : $("#new_order_size").val(),
         "order_discount" : $("#new_discount").val(),
+        "order_duration": $("#new_duration").val(),
       };
 
       console.log(customizeRequest);
