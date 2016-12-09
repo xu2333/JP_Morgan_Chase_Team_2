@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 # Create your views here.
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
-
+from django.shortcuts import render_to_response
+from django.contrib.auth import authenticate, login, logout
+from django.http import HttpResponseRedirect   
 
 def login_view(request):
 
@@ -21,6 +22,10 @@ def login_view(request):
     else:
     	return render(request, 'users/login.html')
 
+def logout_view(request):
+    logout(request)
+    # Redirect to a success page.
+    return HttpResponseRedirect('/')
 
 def register_view(request):
     if request.method == 'POST':

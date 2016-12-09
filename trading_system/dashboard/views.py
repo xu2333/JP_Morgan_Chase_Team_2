@@ -22,11 +22,9 @@ def dashboard(request):
 	# 	data.append({'company_name': o.company_name, 'quantity': o.quantity})
 
 	# return render(request, 'dashboard/dashboard.html', {'apple': str(data)})
-	print ("***********")
 	username = request.user.username
 	userid = request.user.id
 	return render_to_response('dashboard/dashboard.html', locals())
-	return render(request, 'dashboard/dashboard.html')
 
 def test(request):
 	return render(request, 'dashboard/test.html');

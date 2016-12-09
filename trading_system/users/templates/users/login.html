@@ -16,7 +16,7 @@
     }
 
     .form-signin {
-      max-width: 300px;
+      max-width: 350px;
       padding: 39px 59px 59px;
       margin: 0 auto 20px;
       background-color: #fff;
@@ -40,22 +40,36 @@
       padding: 7px 9px;
     }
   </style>
+
+  <script type="text/javascript">
+    function signin() {
+      document.loginForm.method = "POST";
+      document.loginForm.action = "/";
+      document.loginForm.submit;
+    }
+
+    function register() {
+      document.loginForm.method = "GET";
+      document.loginForm.action = "/users/register/";
+      document.loginForm.submit;
+    }
+  </script>
 </head>
 
 <body>
 
 
   <div class="container">
-    <form class="form-signin" method="POST" action="/">
+    <form class="form-signin" name="loginForm">
     {% csrf_token %}
       <h2 class="form-signin-heading">Please sign in</h2>
       <input type="text" class="input-block-level" placeholder="Username" name="username">
       <input type="password" class="input-block-level" placeholder="Password" name="password"> 
 
-      <button class="btn btn-large btn-primary" type="submit">Sign in</button>
+      <button class="btn btn-large btn-primary" type="submit" onclick="signin()">Sign in</button>
+      <button class="btn btn-large btn-success" type="submit" onclick="register()">Sign up</button>
     </form>
-    <a href="/users/register/"><button class="btn btn-large btn-success">Sign up</button></a>
-    
+
 
 
 
