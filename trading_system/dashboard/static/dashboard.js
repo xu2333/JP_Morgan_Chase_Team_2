@@ -22,7 +22,6 @@ let JPTrader = {
 };
 
 
-
 /**
 a function that is called by clicking the button
 @return {undefined}
@@ -541,6 +540,7 @@ JPTrader.dataHandler = function( d ){
 
         JPTrader._removeCancelButton(instrumentId);
         JPTrader._removeResumeButton(instrumentId);
+        JPTrader._removeStrategyButton(instrumentId);
 
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
@@ -606,6 +606,11 @@ JPTrader._removeResumeButton = function( instrument_id ){
   removeButton.style.display = "none";
 }
 
+JPTrader._removeStrategyButton = function( instrument_id ) {
+  const strategyButton = this.orderDOM[+instrument_id].querySelector(".custermize-button");
+  strategyButton.style.display = "none";
+}
+
 JPTrader._showCancelButton = function( instrument_id ) {
   const cancelButton = this.orderDOM[+instrument_id].querySelector(".cancel-button");
   cancelButton.style.display = "inline-block";
@@ -616,6 +621,10 @@ JPTrader._showResumeButton = function( instrument_id ) {
   resumeButton.style.display = "inline-block";
 }
 
+JPTrader._showStrategyButton = function( instrument_id ) {
+  const strategyButton = this.orderDOM[+instrument_id].querySelector(".custermize-button");
+  strategyButton.style.display = "inline-block";
+}
 
 
 /**

@@ -2,9 +2,14 @@
 <html>
 <head>
     <meta charset="utf-8">
-<link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
-<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
-<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+{% load static %}
+{# <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css"> #}
+{# <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script> #}
+{# <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script> #}
+<link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+<script type="text/javascript" src="{% static 'jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'bootstrap.min.js' %}"></script>
 
     <!-- Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -47,7 +52,7 @@
 
 <body>
 
-{% load static %}
+
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
 
 
@@ -125,9 +130,10 @@
 
   
 
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-
+{# <script src="https://code.highcharts.com/highcharts.js"></script> #}
+{# <script src="https://code.highcharts.com/modules/exporting.js"></script> #}
+<script type="text/javascript" src="{% static 'highcharts.js' %}"></script>
+<script type="text/javascript" src="{% static 'exporting.js' %}" ></script>
 
 
 
