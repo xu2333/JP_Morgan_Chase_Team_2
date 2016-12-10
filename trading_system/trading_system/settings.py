@@ -146,9 +146,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'wanganFromColumbia'
-EMAIL_HOST_PASSWORD = 'Guaiguaibaobei00'
-DEFAULT_FROM_EMAIL = 'mail@tuweizhong.com'
+EMAIL_HOST_USER = 'wanganforase'
+EMAIL_HOST_PASSWORD = 'qwerfdsa1234'
+DEFAULT_FROM_EMAIL = 'mail@ase.com'
 
 
 
