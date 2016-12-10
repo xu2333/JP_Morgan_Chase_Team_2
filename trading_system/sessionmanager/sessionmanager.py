@@ -119,6 +119,7 @@ class SessionManager():
             status = 'Finished'
             # Update the order in the database
             trading_logs = json.dumps(session.trading_logs)
+            
             self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, 
                                                 pnl=session.pnl, trading_logs=trading_logs)
         
@@ -293,7 +294,7 @@ class Session(object):
         self.time -= 1
 
         # If time's up --> last second --> sell all shares
-        if self.time == 0:
+        if self.time <= 0:
             order_size = self.quantity
             sell_price = price * 0.5 # Hardcode here
 
