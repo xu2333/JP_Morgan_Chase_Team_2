@@ -13,6 +13,7 @@ import threading
 
 from users.models import OrderHistory
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 
 class SessionManager():
     def __init__(self):
@@ -123,7 +124,10 @@ class SessionManager():
             self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, 
                                                 pnl=session.pnl, trading_logs=trading_logs)
         
+        # Send email to inform trader that an the order is finished
+        send_mail('One of your order finished', 'One of your order finished.', 'wanganfromcolumbia@gmail.com', [self.session_manager[sid].email], fail_silently=False)
         # Remove the session from the current session manager
+
         del self.session_manager[sid]
 
     def add_session(self, sid, session):
@@ -229,12 +233,13 @@ class SessionManager():
 
 
 class Session(object):
-    def __init__(self, session_id, quantity, order_size, order_discount, total_time):
+    def __init__(self, session_id, quantity, order_size, order_discount, total_time, email):
         self.session_id = session_id
         self.quantity = quantity
         self.order_size = order_size
         self.order_discount = order_discount
-
+        # also store the email of trader
+        self.email = email
         # Store the original quantity
         self.ori_quantity = quantity
         self.time = total_time
@@ -413,9 +418,9 @@ def ws_message(message):
             order_size = int(content['order_size'])
             order_discount = int(content['order_discount'])
             total_time = int(content['sell_duration'])
-
+            email = content['email']
             # Init a session instance
-            session = Session(instrument_id, quantity, order_size, order_discount, total_time)
+            session = Session(instrument_id, quantity, order_size, order_discount, total_time, email)
 
             # Add the session instance to the Session Manager
             sm.add_session(instrument_id, session)

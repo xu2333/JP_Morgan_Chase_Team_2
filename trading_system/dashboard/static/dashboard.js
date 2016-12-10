@@ -51,6 +51,8 @@ JPTrader.makeOrder = function(){
   // set request type
   orderInput["request_type"] = "order_request";
 
+  // add email into orderrequest
+  orderInput["email"] = localStorage.getItem("email")
   // send with socket.
   this.sendWithSocket( orderInput );
 
@@ -954,6 +956,8 @@ JPTrader.init = function(){
   // save user name and id in the JPTrader object
   const _username = localStorage.getItem("username");
   const _userid = localStorage.getItem("userid");
+  const _email = localStorage.getItem("email");
+
   if ( !_username ) {
 
     /***********************/
@@ -967,6 +971,7 @@ JPTrader.init = function(){
   }
   this.username = _username;
   this.userid = _userid;
+  this.email = _email;
 
   this.quoteData = Array(243);
   this.quoteData.fill(0);
