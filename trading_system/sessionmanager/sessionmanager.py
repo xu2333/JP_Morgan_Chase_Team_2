@@ -124,10 +124,10 @@ class SessionManager():
             self.sid_internal_mapping[sid].update(status=status, remaining_quantity=session.quantity, 
                                                 pnl=session.pnl, trading_logs=trading_logs)
         
-        # Send email to inform trader that an the order is finished
-        send_mail('One of your order finished', 'One of your order finished.', 'wanganfromcolumbia@gmail.com', [self.session_manager[sid].email], fail_silently=False)
+            # Send email to inform trader that an the order is finished
+            send_mail('One of your order finished', 'One of your order finished.', 'wanganfromcolumbia@gmail.com', [self.session_manager[sid].email], fail_silently=False)
+        
         # Remove the session from the current session manager
-
         del self.session_manager[sid]
 
     def add_session(self, sid, session):
