@@ -24,6 +24,7 @@ def dashboard(request):
 	# return render(request, 'dashboard/dashboard.html', {'apple': str(data)})
 	username = request.user.username
 	userid = request.user.id
+	email = request.user.email
 	return render_to_response('dashboard/dashboard.html', locals())
 
 def test(request):
