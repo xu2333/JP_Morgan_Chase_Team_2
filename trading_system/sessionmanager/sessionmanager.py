@@ -162,12 +162,14 @@ class SessionManager():
         
         quote = json.loads(response.decode("utf-8"))
         price = float(quote['top_bid']['price'])
+        size = float(quote['top_bid']['size'])
         timestamp = quote['timestamp']
 
         quote_message = {
                 "instrument_id": '',
                 "message_type": "quote",
                 "quote": price,
+                "size": size,
                 "timestamp": timestamp,
                 
                 "remaining_quantity": 0,
