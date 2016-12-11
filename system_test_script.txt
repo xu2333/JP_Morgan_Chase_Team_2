@@ -26,13 +26,26 @@ The symbol "-->" means check the results.
 11. Be able to hover the bars on the chart to see detail information
 	--> Detail information shos up
 12. Order selling summary are displayed as a collapse table
-	--> 
+	--> Collapse table shows up
 13. Detailed selling logs are displayed by clicking on the summary
+	--> Logs show up
 14. Make many orders
+	--> Success
 15. All the orders are executed independently
+	--> Success
 16. Be able to display the delta price
+	--> Delta price shows up
 17. Be able to modify the order execution strategy
+	--> Success
 18. Cancel an order
+	--> Stop execution
 19. Resume the canceled order
+	--> Resume execution
 20. Logout
+	--> Back to home page
 21. Login agian and see the order history
+	--> Be able to see the history page
+
+
+
+
