@@ -208,7 +208,7 @@ class SessionManager():
             if self.session_manager:
                 for session in self.session_manager.values():
 
-                    session.set_init_tmestamp(timestamp)
+                    session.set_init_timestamp(timestamp)
                     if not session.saved:
                         self.save_order(session)
 
@@ -260,7 +260,7 @@ class Session(object):
         self.trading_logs = []
 
 
-    def set_init_tmestamp(self, timestamp):
+    def set_init_timestamp(self, timestamp):
         if not self.init_timestamp:
             self.init_timestamp = timestamp
 
