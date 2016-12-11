@@ -1,0 +1,39 @@
+Converage Report 1
+nosetests --with-coverage --cover-package=sessionmanager --with-coverage --verbosity=1
+Creating test database for alias 'default'...
+...........
+Name                               Stmts   Miss  Cover
+------------------------------------------------------
+sessionmanager.py                      0      0   100%
+sessionmanager/admin.py                1      1     0%
+sessionmanager/migrations.py           0      0   100%
+sessionmanager/models.py               1      1     0%
+sessionmanager/sessionmanager.py     199     85    57%
+------------------------------------------------------
+TOTAL                                201     87    57%
+----------------------------------------------------------------------
+Ran 11 tests in 0.187s
+
+OK
+Destroying test database for alias 'default'...
+
+
+
+Coverage Report 2
+nosetests --with-coverage --cover-package=sessionmanager --verbosity=1
+Creating test database for alias 'default'...
+............
+Name                               Stmts   Miss  Cover
+------------------------------------------------------
+sessionmanager.py                      0      0   100%
+sessionmanager/admin.py                1      1     0%
+sessionmanager/migrations.py           0      0   100%
+sessionmanager/models.py               1      1     0%
+sessionmanager/sessionmanager.py     199     69    65%
+------------------------------------------------------
+TOTAL                                201     71    65%
+----------------------------------------------------------------------
+Ran 12 tests in 0.239s
+
+OK
+Destroying test database for alias 'default'...
