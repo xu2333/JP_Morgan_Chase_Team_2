@@ -1,0 +1,23 @@
+5 minutes Showcase Script
+
+1. Run Django testing server and market simulation server
+2. Open a browser and enter localhost:8000
+3. Click button "register" and register an account
+4. Log into the system with the account
+5. Be able to see a dashboard 
+6. Be able to see a line chart that keeps plotting ongoing quotes
+7. Be able to hover the points on the chart to see detail information
+8. Make an order
+9. Be able to see the system automatically determine the bid window
+10. Order selling volumes are displayed in the chart as bars
+11. Be able to hover the bars on the chart to see detail information
+12. Order selling summary are displayed as a collapse table 
+13. Detailed selling logs are displayed by clicking on the summary
+14. Make many orders
+15. All the orders are executed independently
+16. Be able to display the delta price
+17. Be able to modify the order execution strategy
+18. Cancel an order
+19. Resume the canceled order
+20. Logout
+21. Login agian and see the order history
