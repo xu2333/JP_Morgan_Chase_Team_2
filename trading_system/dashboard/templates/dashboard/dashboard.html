@@ -27,14 +27,24 @@
     <div class="container-fluid">
       <div class="navbar-header">
         <a class="navbar-brand" href="#">
-          <img alt="Brand" src="...">
+          {# <img alt="Brand" src="..."> #}
         </a>
       </div>
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        
         <ul class="nav navbar-nav navbar-right">
-            <li>Welcome, {{username}}</li>
-            <li> <a href="/users/logout/"><button class="btn btn-primary">Log out</button></a></li>
+          
+          <li> <a href="/users/logout/"><button class="btn btn-primary">Log out</button></a></li>
         </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+          <li><p class="navbar-text">Welcome, {{username}}</p></li>
+          <li class="navbar-text">total quantity sold: </li>
+          <li id="aggregate-tqs" class="navbar-text">0</li>
+          <li class="navbar-text">total pnl:</li>
+          <li id="aggregate-tpnl" class="navbar-text">0</li>
+        </ul>
+
         </div>
     </div>
   </nav>

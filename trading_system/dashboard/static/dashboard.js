@@ -230,7 +230,7 @@ JPTrader.sendWithSocket = function( orderData ){
       console.log(customizeRequest);
 
       this.ws.send(JSON.stringify(customizeRequest));
-      $('#myModal').modal('hide')
+      $('#myModal').modal('hide');
     } 
     document.getElementById("customize_btn").addEventListener("click",  customize.bind(this));
 
@@ -719,7 +719,9 @@ Plot the forever going chart for this stock
 @return {undefined}
 */
 JPTrader.drawChart = function( firstQuote ){
-       
+console.log('checking existence of chart container');        
+console.log(document.getElementById("chartContainer"));
+
 $(function () {
   $(document).ready(function () {
     Highcharts.setOptions({
@@ -945,6 +947,8 @@ A function to setup all the interactions, linkage and connections
 */
 JPTrader.init = function(){
 
+  console.log('in init');
+  console.log(document.getElementById("make-order-btn"));
   if ( document.getElementById("make-order-btn") === null ) return;
 
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
@@ -994,7 +998,7 @@ JPTrader.init = function(){
 
 };
 
-JPTrader.init();
+// JPTrader.init();
 
 
 function* idGenerator(){

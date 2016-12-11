@@ -69,7 +69,7 @@ myLayout.registerComponent( 'chartView', function( container, componentState ){
 
 
 myLayout.registerComponent( "todayOrdersView", function( container, componentState ){
-	container.getElement().html( '<h2>' + componentState.label + '</h2>' );
+	container.getElement().html( '<div id="order-list">' );
 });
 
 myLayout.registerComponent( "historyView", function( container, componentState ){
@@ -108,6 +108,19 @@ myLayout.registerComponent( "userSettingsView", function( container, componentSt
 	container.getElement().html( '<h2>' + componentState.text + '</h2>' );
 });
 
+
+// myLayout.on("initialised", function(){
+// });
+
+myLayout.on("itemCreated", function(e){
+	
+	// console.log('in item created...');
+	// console.log(e);
+	if (e.componentName == "historyView" ) {
+		JPTrader.init();
+	}
+
+});
 
 
 myLayout.init();
