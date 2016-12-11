@@ -21,8 +21,6 @@ class SessionManagerUnitTester(TestCase):
 
         self.u = User.objects.create(username='test')
         
-        # self.sm.set_user(u.id)
-        # self.sm.user = self.u
         self.sm.user = self.u
 
         self.sm.thread.start()
@@ -86,6 +84,23 @@ class SessionManagerUnitTester(TestCase):
         
         self.assertEqual(len(self.sm.session_manager), 0)
         self.assertEqual(len(self.sm.removed_session_cache), 1)
+
+    def test_resume_session(self):
+        self.assertEqual(len(self.sm.session_manager), 1)
+        self.assertEqual(len(self.sm.removed_session_cache), 0)
+
+        sid = 0        
+
+        self.sm.removeSession(sid, 'canceled_order')
+        
+        self.assertEqual(len(self.sm.session_manager), 0)
+        self.assertEqual(len(self.sm.removed_session_cache), 1)
+
+        self.sm.resume_canceled_session(sid)
+
+        self.assertEqual(len(self.sm.session_manager), 1)
+        self.assertEqual(len(self.sm.removed_session_cache), 1)
+
 
     def test_quote(self):
         quote_json, price, _ = self.sm.quote()

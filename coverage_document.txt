@@ -1,0 +1,9 @@
+We used Coverage.py as the tool for measuring code coverage of Python programs. 
+Moreover, we used django-nose as the interface tool for using Coverage.py for Django modules. 
+By setting up django-nose correctly in our system, we were able to see the code coverage after running the unit tests. 
+Initially, we got a code coverage of 57%. 
+After adding another unit test, we got a code coverage at 65%. 
+The reason that we had a relative low code coverage was a great amount of code was triggered by the events of receiving websocket messages and the event of disconnection of websocket. 
+These lines of code were hard to test at the local pure Python or Django environment without setting up a websocket between server and frontend. 
+We are still trying to find a way to test the codes under websocket events. 
+However, we ran out of time for this tasks in the second iteration. 
