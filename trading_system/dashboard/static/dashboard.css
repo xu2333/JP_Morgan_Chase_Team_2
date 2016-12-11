@@ -1,3 +1,4 @@
+
 .left-col{
   float: left;
   width: 20%;
@@ -93,3 +94,15 @@ div.neg-delta:after{
   content: ")";
 }
 
+
+/* Layout new Design overwriting Bootstrap */
+.form-control{
+  width: 86%;
+  background-color: #222222;
+  border: 1px solid #666666;
+  border-radius: 0;
+}
+
+.navbar{
+  margin-bottom: 0px;
+}

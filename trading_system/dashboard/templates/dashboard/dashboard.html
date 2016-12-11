@@ -1,101 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+  <meta charset="utf-8">
 
-{% load static %}
-{# <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css"> #}
-{# <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script> #}
-{# <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script> #}
-<link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
-<script type="text/javascript" src="{% static 'jquery.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'bootstrap.min.js' %}"></script>
+  {% load static %}
+  {# <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css"> #}
+  {# <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script> #}
+  {# <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script> #}
+  <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
+  <link type="text/css" rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-base.css" />
+  <link type="text/css" rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-dark-theme.css" />
 
-    <!-- Modal -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-                        &times;
-                    </button>
-                    <h4 class="modal-title" id="myModalLabel">
-          Customize Your Strategy
-        </h4>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <input type="text" class="input-block-level form-control" placeholder="Order size" id="new_order_size"><br>
-                        <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="new_discount"><br>
-                        <input type="text" class="input-block-level form-control" placeholder="Sell duration" name="sell duration" id="new_duration">
-                        <input type="hidden" id="stock_id">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" id="customize_btn">
-                        Submit
-                    </button>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal -->
-    </div>
+  <script type="text/javascript" src="{% static 'jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'goldenlayout.js' %}"></script>
+  <script type="text/javascript" src="{% static 'bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'highcharts.js' %}"></script>
+  <script type="text/javascript" src="{% static 'exporting.js' %}" ></script>
+
+  <script src="https://d3js.org/d3.v3.js"></script>
 </head>
-
-<ul class="nav navbar-nav navbar-right">
-    <li>Welcome, {{username}}</li>
-    <li> <a href="/users/logout/"><button class="btn btn-primary">Log out</button></a></li>
-</ul>
 
 <body>
 
-
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
-
-
-
-<script src="https://d3js.org/d3.v3.js"></script>
-
-
-
-
-    
-
-<div class="container-fluid">
-  <h1>Welcome to JP Morgan Trader's Dashboard</h1>
-
-  <div class='left-col'>
-    <h2 class="form-signin-heading">Make order here</h2>
-    <div>
-      <div class="form-group">
-        <label for="ParentOrder">Total Quantity (Parent Order)</label>
-        <input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">
+          <img alt="Brand" src="...">
+        </a>
       </div>
-      <div class="form-group">
-        <label for="ChildOrder">Order Size (Child Order)</label>
-        <input type="text" class="input-block-level form-control" placeholder="Order size" id="order_size">
-      </div>
-      <div class="form-group">
-        <label for="Discount">Discount</label>
-        <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="discount">
-      </div>
-
-      <div class="form-group">
-        <label for="sell-duration">Sell Duration (minutes)</label>
-          <input type="text" class="input-block-level form-control" placeholder="Duration" name="Time" id="sell_duration">    
-      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav navbar-right">
+            <li>Welcome, {{username}}</li>
+            <li> <a href="/users/logout/"><button class="btn btn-primary">Log out</button></a></li>
+        </ul>
+        </div>
     </div>
+  </nav>
 
-    <!-- <button class="btn btn-large btn-primary" type="submit" onclick="WebSocketTest()">Make order</button> -->
-    <button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>
   
-    <div id="input-error-message"></div>
-  </div>
 
-  <div class="right-col">
+<!-- div class="container-fluid" id="panels" -->
+<div id="panels" style="width: 1440px; height: 860px;">
+  {# <h1>Welcome to JP Morgan Trader's Dashboard</h1> #}
+
+   <!-- div class='left-col'>
+    <div id="make-order-layout">
+      <h2 class="form-signin-heading">Make order here</h2>
+      <div>
+        <div class="form-group">
+          <label for="ParentOrder">Total Quantity (Parent Order)</label>
+          <input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">
+        </div>
+        <div class="form-group">
+          <label for="ChildOrder">Order Size (Child Order)</label>
+          <input type="text" class="input-block-level form-control" placeholder="Order size" id="order_size">
+        </div>
+        <div class="form-group">
+          <label for="Discount">Discount</label>
+          <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="discount">
+        </div>
+
+        <div class="form-group">
+          <label for="sell-duration">Sell Duration (minutes)</label>
+            <input type="text" class="input-block-level form-control" placeholder="Duration" name="Time" id="sell_duration">    
+        </div>
+      </div>
+
+      <button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>
+  
+      <div id="input-error-message"></div>
+    </div>
+  </div--> 
+
+  <!-- div class="right-col">
     <div id="aggregate-view">
       <table>
         <thead>
@@ -106,15 +85,13 @@
         </tbody>
       </table>
     </div>
-<!--     <div id="quote-chart-wrap">
-        <svg></svg>        
-    </div> -->
+
     <div id="chartContainer"></div>
     <div id="order-list">
     
     </div>
 
-  </div>
+  </div-->
 
 </div>
 
@@ -126,14 +103,48 @@
   localStorage.setItem("username", _username);
   localStorage.setItem("userid", _userid);
 </script>
+
+<script type="text/javascript" src="{% static 'initLayout.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard.js' %}"></script>
 
   
 
 {# <script src="https://code.highcharts.com/highcharts.js"></script> #}
 {# <script src="https://code.highcharts.com/modules/exporting.js"></script> #}
-<script type="text/javascript" src="{% static 'highcharts.js' %}"></script>
-<script type="text/javascript" src="{% static 'exporting.js' %}" ></script>
+
+
+
+
+
+<!-- HTML of the strategy setting popup view-->
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+              &times;
+          </button>
+          <h4 class="modal-title" id="myModalLabel"> Customize Your Strategy </h4>
+        </div>
+        <div class="modal-body">
+          <form>
+            <input type="text" class="input-block-level form-control" placeholder="Order size" id="new_order_size"><br>
+            <input type="text" class="input-block-level form-control" placeholder="Discount" name="Discount" id="new_discount"><br>
+            <input type="text" class="input-block-level form-control" placeholder="Sell duration" name="sell duration" id="new_duration">
+            <input type="hidden" id="stock_id">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="customize_btn">Submit</button>
+        </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal -->
+</div>
+
 
 
 
