@@ -125,7 +125,7 @@ class SessionManager():
                                                 pnl=session.pnl, trading_logs=trading_logs)
         
             # Send email to inform trader that an the order is finished
-            send_mail('One of your order finished', 'One of your order finished.', 'wanganfromcolumbia@gmail.com', [self.session_manager[sid].email], fail_silently=False)
+            send_mail('One of your order finished', "One of your order finished. PNL = {}".format(session.pnl), 'wanganfromcolumbia@gmail.com', [self.session_manager[sid].email], fail_silently=False)
         
         # Remove the session from the current session manager
         del self.session_manager[sid]
