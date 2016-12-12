@@ -239,12 +239,11 @@ JPTrader.sendWithSocket = function( orderData ){
     const deltaBox = document.createElement("div");
     deltaBox.setAttribute("class", "delta-box");
 
-
     const chartWrap = document.createElement("div");
     chartWrap.setAttribute("class", "order-chart");
 
     const progressTable = document.createElement("table");
-    progressTable.setAttribute("class", "table");
+    progressTable.setAttribute("class", "table order-table");
 
     const tableHeader = document.createElement("thead");
     tableHeader.innerHTML = "<tr><td>Sold Price</td><td>Remaining</td><td>PnL</td></tr>";
@@ -584,7 +583,8 @@ JPTrader._tableRowHelper = function( soldPrice = "", remaining = "", pnl = "" ){
   }
 
   if ( +remaining === 0 || soldPrice === "Start" ){
-    return `<tr class="success"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
+    // return `<tr class="success"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
+    return `<tr class="custom-start"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
   }
   if ( soldPrice === "Canceled" ){
     return `<tr class="danger"><td>${soldPrice}</td><td>${remaining}</td><td>${pnl}</td></tr>`; 
@@ -763,8 +763,12 @@ $(function () {
         width: 1,
         color: '#808080'
       }]
-    }
-    ],
+    }],
+    plotOptions: {
+      series: {
+        color: "#003dd7"
+      }
+    },
     tooltip: {
       shared: true
     },
@@ -1030,11 +1034,16 @@ $(function () {
             title: {
                 text: 'Volumn',
                 style: {
-                    color: Highcharts.getOptions().colors[1]
+                    color: "#A0A0A3"/*Highcharts.getOptions().colors[1]*/
                 }
             }
-        }
-        ],
+        }],
+        plotOptions: {
+          series: {
+            borderWidth: 0,
+            color: "#003dd7"
+          }
+        },
         tooltip: {
             shared: true
         },

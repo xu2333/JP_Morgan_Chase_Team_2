@@ -12,7 +12,7 @@ const config = {
       	componentName: 'chartView',
       	componentState: { label: 'chart_view'},
 
-      	title: "market charts",
+      	title: "Market Price",
       	width: 720,
         height: 328
       },{
@@ -20,9 +20,9 @@ const config = {
         componentName: 'chartView2',
         componentState: { label: 'chart_view_2'},
 
-        title: "market volume charts",
+        title: "Market Volume",
         width: 720,
-        height: 100,
+        height: 120,
         
       },
       {
@@ -35,7 +35,7 @@ const config = {
 			    componentName: 'makeOrdersView',
 			    componentState: { text: 'Component 1' },
 
-          title: "make orders",
+          title: "Make Orders",
           isClosable: false
 			    },
 			    {
@@ -43,7 +43,7 @@ const config = {
 			    componentName: 'userSettingsView',
 			    componentState: { text: 'Component 2' },
 
-          title: "user setting"
+          title: "User Setting"
 			    }
 			  ],
 			  width: 720,
@@ -58,14 +58,14 @@ const config = {
         type: 'component',
         componentName: "todayOrdersView",
         componentState: { label: 'B' },
-        title: "today's orders"
+        title: "Today's Orders"
 
       },{
         type: 'component',
         componentName: 'historyView',
         componentState: { label: 'C' },
 
-        title: "history"
+        title: "History"
       }],
       width: 720,
       height: 834
@@ -97,7 +97,7 @@ myLayout.registerComponent( "historyView", function( container, componentState )
 
 myLayout.registerComponent( "makeOrdersView", function( container, componentState ){
 	const makeOrderHTML = '<div id="make-order-layout">' +
-      '<h3 class="form-signin-heading">Make order</h3>' + 
+      '<!--h3 class="form-signin-heading">Make Order</h3-->' + 
       '<div>' +
         '<div class="form-group">' +
           '<label for="ParentOrder">Total Quantity (Parent Order)</label>' + 
@@ -116,7 +116,7 @@ myLayout.registerComponent( "makeOrdersView", function( container, componentStat
             '<input type="text" class="input-block-level form-control" placeholder="Duration" name="Time" id="sell_duration">' +   
         '</div>' + 
       '</div>' + 
-      '<button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make order</button>' + 
+      '<button class="btn btn-large btn-primary" type="submit" id="make-order-btn">Make Order</button>' + 
       '<div id="input-error-message"></div>' + 
     '</div>';
 	container.getElement().html( makeOrderHTML );

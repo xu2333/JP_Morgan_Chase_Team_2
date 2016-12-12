@@ -7,6 +7,10 @@
 		<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		<style type="text/css">
 
+			body{
+				background-color: #222;
+			}
+
 			.detail-row{
 				display: none;
 				background-color: #D3D3D3;
@@ -19,14 +23,55 @@
 			tr.order-row{
 				cursor: pointer;
 			}
+
+			.table-striped>tbody>tr:nth-of-type(odd) {
+			    background-color: #222;
+			}
+
+			.table-striped>tbody>tr:nth-of-type(even) {
+			    background-color: #333;
+			}
+
+			table#history-table tbody{
+				border-collapse: collapse;
+			}
+
+			#history-table > tbody td{
+				border: none;
+			}
+
+			#history-table tbody{
+				font-family: Tahoma,Verdana,Segoe,sans-serif;
+				font-weight: 400;
+				color: #f79a23;
+			}
+
+			#history-table > tbody td{
+				padding-top: 7px;
+				padding-bottom: 7px;
+			}
+
+			#history-table thead{
+				border: 1px;
+				border-color: #333;
+				background-color: #555;
+
+				color: #fff;
+			}
+
+			.order-row>td:nth-child(3){
+				color: white;
+			}
+
+
 			
 		</style>
 	</head>
 	<body>
 
 	<div id="history-table-wrap" class="container">
-		<h1>History Orders of {{username}}</h1>
-		<table class="table table-hover" id="history-table">
+		<h3 style="font-family: Tahoma,Verdana,Segoe,sans-serif; color: #eee;">History Orders of {{username}}</h3>
+		<table class="table table-striped" id="history-table">
 			<thead>
 				<tr>
 					<td>Time</td>
