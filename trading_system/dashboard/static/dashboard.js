@@ -366,8 +366,13 @@ JPTrader.initWebSocket = function( callback ){
         // doesn't look really reliable.
         const firstTimeStamp = receivedMessage[0]["timestamp"];
         // const series1 = JPTrader.quoteChart.series[1];
+        /*
         const series1 = JPTrader.volumnChart.series[0];
         series1.addPoint( [ (new Date(firstTimeStamp)).getTime(), soldSum ], true, true);
+        
+        const series0 = JPTrader.quoteChart.series[0];
+        series0.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["quote"]) ], true, true);
+        */
         
       }
       
@@ -1047,6 +1052,7 @@ $(function () {
         series: [{
             type: 'column',
             name: 'Volume',
+            type: 'area'，
             data: (function () {
                 var data = [];
                 const time = (new Date(firstQuote["timestamp"])).getTime();
@@ -1058,7 +1064,19 @@ $(function () {
                     });
                 }
                 return data;
-            }())
+            }())，
+            fillColor : {
+                 linearGradient : {
+                    x1: 0,
+                    y1: 0,
+                    x2: 0,
+                    y2: 1
+                 },
+                 stops : [
+                    [0, Highcharts.getOptions().colors[0]],
+                    [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                ]
+            }
         }]
     });
   });
@@ -1070,7 +1088,7 @@ $(function () {
 
 
 /**
-A click delegate for all order wrap tables. This function will collapse and open the 
+A click delegate for all order wrap tables. This function will collapse and open the
 trading details while user wants to look for more. This function should be added on the 
 right-col div.
 @param {Event} e
