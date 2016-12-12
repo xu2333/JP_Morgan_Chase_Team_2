@@ -105,4 +105,19 @@ div.neg-delta:after{
 
 .navbar{
   margin-bottom: 0px;
+  min-height: 44px;
+}
+
+.navbar-brand{
+  height: 40px;
+}
+
+.navbar-text{
+  margin-top: 13px;
+  margin-bottom: 11px;
+}
+
+.navbar-nav > li > a{
+  padding-top: 5px;
+  padding-bottom: 5px;
 }

@@ -1,4 +1,5 @@
 // this file is to setup the layout of golden layout plugin
+// and call JPTrader init after the layout is complete.
 
 const config = {
   content: [{
@@ -58,13 +59,8 @@ const myLayout = new GoldenLayout( config , $("#panels") );
 myLayout.registerComponent( 'chartView', function( container, componentState ){
 
 	const section = container.getElement()[0];
-	// console.log(container.getElement());
-	// console.log(componentState);
-	// section.innerHTML = "Charts...";
-	// console.log(section)
 	container.getElement().html('<div id="chartContainer"></div>');
 
-  // container.getElement().html( '<h2>' + componentState.label + '</h2>' );
 });
 
 
@@ -73,11 +69,12 @@ myLayout.registerComponent( "todayOrdersView", function( container, componentSta
 });
 
 myLayout.registerComponent( "historyView", function( container, componentState ){
-	container.getElement().html( '<h2>' + componentState.label + '</h2>' );
+	// container.getElement().html( '<h2>' + componentState.label + '</h2>' );
+	container.getElement().html('<iframe style="width: 100%; height: 100%;" src="../history/"></iframe>');
+
 });
 
 myLayout.registerComponent( "makeOrdersView", function( container, componentState ){
-	// container.getElement().html( '<h2>' + componentState.text + '</h2>' );
 	const makeOrderHTML = '<div id="make-order-layout">' +
       '<h2 class="form-signin-heading">Make order here</h2>' + 
       '<div>' +
@@ -112,15 +109,9 @@ myLayout.registerComponent( "userSettingsView", function( container, componentSt
 // myLayout.on("initialised", function(){
 // });
 
+// init JPTrader after all the html tags are rendered in the golden layout.
 myLayout.on("itemCreated", function(e){
-	
-	// console.log('in item created...');
-	// console.log(e);
-	if (e.componentName == "historyView" ) {
-		JPTrader.init();
-	}
-
+	if (e.componentName == "historyView" ) JPTrader.init();
 });
-
 
 myLayout.init();

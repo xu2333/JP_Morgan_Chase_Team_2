@@ -7,18 +7,19 @@
   {# <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css"> #}
   {# <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script> #}
   {# <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script> #}
-  <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'lib/bootstrap.min.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
-  <link type="text/css" rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-base.css" />
-  <link type="text/css" rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-dark-theme.css" />
+  <link type="text/css" rel="stylesheet" href="{% static 'lib/goldenlayout-base.css' %}" />
+  <link type="text/css" rel="stylesheet" href="{% static 'lib/goldenlayout-dark-theme.css' %}" />
 
-  <script type="text/javascript" src="{% static 'jquery.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'goldenlayout.js' %}"></script>
-  <script type="text/javascript" src="{% static 'bootstrap.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'highcharts.js' %}"></script>
-  <script type="text/javascript" src="{% static 'exporting.js' %}" ></script>
+  <script type="text/javascript" src="{% static 'lib/jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'lib/goldenlayout.js' %}"></script>
+  <script type="text/javascript" src="{% static 'lib/bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'lib/highcharts.js' %}"></script>
+  <script type="text/javascript" src="{% static 'lib/exporting.js' %}" ></script>
 
-  <script src="https://d3js.org/d3.v3.js"></script>
+  {# // <script type="text/javascript" src="{% static 'lib/d3.v3.js' %}"></script> #}
+  {# // <script src="https://d3js.org/d3.v3.js"></script> #}
 </head>
 
 <body>
@@ -27,13 +28,13 @@
     <div class="container-fluid">
       <div class="navbar-header">
         <a class="navbar-brand" href="#">
+          {# Logo To be Added here... #}
           {# <img alt="Brand" src="..."> #}
         </a>
       </div>
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         
         <ul class="nav navbar-nav navbar-right">
-          
           <li> <a href="/users/logout/"><button class="btn btn-primary">Log out</button></a></li>
         </ul>
 
@@ -116,8 +117,6 @@
 
 <script type="text/javascript" src="{% static 'initLayout.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard.js' %}"></script>
-
-  
 
 {# <script src="https://code.highcharts.com/highcharts.js"></script> #}
 {# <script src="https://code.highcharts.com/modules/exporting.js"></script> #}
