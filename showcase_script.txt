@@ -19,5 +19,6 @@
 17. Be able to modify the order execution strategy
 18. Cancel an order
 19. Resume the canceled order
+19.5 Receive an email that informs the trader an order is complete
 20. Logout
-21. Login agian and see the order history
+21. Login again and see the order history
