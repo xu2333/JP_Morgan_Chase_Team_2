@@ -364,11 +364,13 @@ JPTrader.initWebSocket = function( callback ){
         } ,0);
         // doesn't look really reliable.
         const firstTimeStamp = receivedMessage[0]["timestamp"];
-        const series1 = JPTrader.quoteChart.series[1];
+        // const series1 = JPTrader.quoteChart.series[1];
+        const series1 = JPTrader.volumnChart.series[0];
 
         // console.log('add point');
         // console.log(`first timestamp: ${firstTimeStamp}, sold sum: ${soldSum}`);
-        series1.addPoint( [ (new Date(firstTimeStamp)).getTime(), soldSum ], true, true);  
+        series1.addPoint( [ (new Date(firstTimeStamp)).getTime(), soldSum ], true, true);
+        
       }
       
 
@@ -734,12 +736,10 @@ $(function () {
             
   JPTrader.quoteChart = Highcharts.chart('chartContainer', {
     chart: {
-      // type: 'spline',
       animation: Highcharts.svg,
       marginRight: 10,
       events: {
         load: function () {
-          // do something after the chart is rendered.
         }
       }
     },
@@ -762,22 +762,9 @@ $(function () {
         width: 1,
         color: '#808080'
       }]
-    },{
-        title: {
-            text: 'Volumn',
-            style: {
-                color: Highcharts.getOptions().colors[1]
-            }
-        },
-        opposite: true
     }
     ],
     tooltip: {
-      /*
-      formatter: function () {
-        return Highcharts.dateFormat('%H:%M:%S', this.x) + '<br/> quote:' + Highcharts.numberFormat(this.y, 2);
-      }
-      */
       shared: true
     },
     legend: {
@@ -801,26 +788,66 @@ $(function () {
         }
         return data;
       }())
-    },{
-        type: 'column',
-        name: 'Volume',
-        yAxis: 1,
-        data: (function () {
-            var data2 = [];
-            const time2 = (new Date(firstQuote["timestamp"])).getTime();
-               
-            for (let i = -59; i <= 0; i += 1) {
-               data2.push({
-                    x: time2 + i * 1000,
-                    y: 0
-                });
-            }
-            return data2;
-        }())
     }]
   });
   });
-});
+  
+  JPTrader.volumnChart = Highcharts.chart('chartContainer2', {
+        chart: {
+            animation: Highcharts.svg,
+            marginRight: 10,
+            events: {
+                load: function () {
+                }
+            }
+        },
+        credits: {
+            enabled: false
+        },
+        title: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime',
+            tickPixelInterval: 150
+        },
+        yAxis: [{
+            title: {
+                text: 'Volumn',
+                style: {
+                    color: Highcharts.getOptions().colors[1]
+                }
+            }
+        }
+        ],
+        tooltip: {
+            shared: true
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: {
+            enabled: false
+        },
+        series: [{
+            type: 'column',
+            name: 'Volume',
+            data: (function () {
+                var data = [];
+                const time = (new Date(firstQuote["timestamp"])).getTime();
+                                                         
+                for (let i = -59; i <= 0; i += 1) {
+                    data.push({
+                        x: time + i * 1000,
+                        y: 0
+                    });
+                }
+                return data;
+            }())
+        }]
+    });
+  });
+
 
 
 
