@@ -1046,7 +1046,10 @@ $(function () {
         plotOptions: {
           series: {
             borderWidth: 0,
-            color: "#003dd7"
+            color: "#003dd7",
+            marker: {
+              enabled: false
+            }
           }
         },
         tooltip: {
@@ -1061,7 +1064,7 @@ $(function () {
         series: [{
             type: 'column',
             name: 'Volume',
-            type: 'area'，
+            type: 'area',
             data: (function () {
                 var data = [];
                 const time = (new Date(firstQuote["timestamp"])).getTime();
@@ -1073,7 +1076,7 @@ $(function () {
                     });
                 }
                 return data;
-            }())，
+            }()),
             fillColor : {
                  linearGradient : {
                     x1: 0,
