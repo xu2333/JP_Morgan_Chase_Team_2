@@ -22,7 +22,8 @@ const config = {
 
         title: "market volume charts",
         width: 720,
-        height: 100
+        height: 100,
+        
       },
       {
       	type: 'stack',
@@ -34,7 +35,8 @@ const config = {
 			    componentName: 'makeOrdersView',
 			    componentState: { text: 'Component 1' },
 
-          title: "make orders"
+          title: "make orders",
+          isClosable: false
 			    },
 			    {
 			    type:'component',
@@ -68,8 +70,7 @@ const config = {
       width: 720,
       height: 834
     }]
-  }],
-  height: 757
+  }]
 };
 
 const myLayout = new GoldenLayout( config , $("#panels") );
