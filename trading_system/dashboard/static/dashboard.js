@@ -420,6 +420,9 @@ JPTrader.initWebSocket = function( callback ){
 
               const series1 = JPTrader.volumnChart.series[0];
               series1.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["size"]) ], true, true);
+                              
+              const series2 = JPTrader.volumnChart.series[1];
+              series2.addPoint( [ (new Date(message["timestamp"])).getTime(), parseFloat(message["size"]) ], true, true);
             
             }
 
@@ -1089,7 +1092,25 @@ $(function () {
                     [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
                 ]
             }
-        }]
+        },
+        {
+                 type: 'column',
+                 name: 'Volume2',
+                 color: '#f7a35c',
+                 data: (function () {
+                        var data2 = [],
+                        time2 = (new Date()).getTime(),i;
+                        
+                        for (i = -19; i <= 0; i += 1) {
+                        data2.push({
+                                   x: time2 + i * 1000,
+                                   y: 0
+                                   });
+                        }
+                        return data2;
+                        }())
+        }
+        ]
     });
   });
 
@@ -1101,7 +1122,7 @@ $(function () {
 
 /**
 A click delegate for all order wrap tables. This function will collapse and open the
-trading details while user wants to look for more. This function should be added on the 
+trading details while user wants to look for more. This function should be added on the
 right-col div.
 @param {Event} e
 */
