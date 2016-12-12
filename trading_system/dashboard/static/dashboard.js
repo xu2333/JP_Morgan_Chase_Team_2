@@ -22,7 +22,6 @@ let JPTrader = {
 };
 
 
-
 /**
 a function that is called by clicking the button
 @return {undefined}
@@ -233,7 +232,7 @@ JPTrader.sendWithSocket = function( orderData ){
       console.log(customizeRequest);
 
       this.ws.send(JSON.stringify(customizeRequest));
-      $('#myModal').modal('hide')
+      $('#myModal').modal('hide');
     } 
     document.getElementById("customize_btn").addEventListener("click",  customize.bind(this));
 
@@ -543,6 +542,7 @@ JPTrader.dataHandler = function( d ){
 
         JPTrader._removeCancelButton(instrumentId);
         JPTrader._removeResumeButton(instrumentId);
+        JPTrader._removeStrategyButton(instrumentId);
 
         const objectToMove = JPTrader.currentOrders.splice(indexToRemove, 1)[0];
         if ( objectToMove !== null ){
@@ -608,6 +608,11 @@ JPTrader._removeResumeButton = function( instrument_id ){
   removeButton.style.display = "none";
 }
 
+JPTrader._removeStrategyButton = function( instrument_id ) {
+  const strategyButton = this.orderDOM[+instrument_id].querySelector(".custermize-button");
+  strategyButton.style.display = "none";
+}
+
 JPTrader._showCancelButton = function( instrument_id ) {
   const cancelButton = this.orderDOM[+instrument_id].querySelector(".cancel-button");
   cancelButton.style.display = "inline-block";
@@ -618,6 +623,10 @@ JPTrader._showResumeButton = function( instrument_id ) {
   resumeButton.style.display = "inline-block";
 }
 
+JPTrader._showStrategyButton = function( instrument_id ) {
+  const strategyButton = this.orderDOM[+instrument_id].querySelector(".custermize-button");
+  strategyButton.style.display = "inline-block";
+}
 
 
 /**
@@ -712,7 +721,9 @@ Plot the forever going chart for this stock
 @return {undefined}
 */
 JPTrader.drawChart = function( firstQuote ){
-       
+console.log('checking existence of chart container');        
+console.log(document.getElementById("chartContainer"));
+
 $(function () {
   $(document).ready(function () {
     Highcharts.setOptions({
@@ -938,6 +949,8 @@ A function to setup all the interactions, linkage and connections
 */
 JPTrader.init = function(){
 
+  console.log('in init');
+  console.log(document.getElementById("make-order-btn"));
   if ( document.getElementById("make-order-btn") === null ) return;
 
   document.getElementById("make-order-btn").addEventListener("click", this.makeOrder.bind(this) );
@@ -990,7 +1003,7 @@ JPTrader.init = function(){
 
 };
 
-JPTrader.init();
+// JPTrader.init();
 
 
 function* idGenerator(){
