@@ -95,12 +95,39 @@ div.neg-delta:after{
 }
 
 
+/* High Charts */
+#chartContainer{
+  height: 286px;
+}
+
+
+
+/* Golden Layout Design */
+#make-order-layout{
+  padding-left: 34px;
+}
+
+
+
 /* Layout new Design overwriting Bootstrap */
 .form-control{
   width: 86%;
   background-color: #222222;
   border: 1px solid #666666;
   border-radius: 0;
+}
+
+.form-group > label {
+  width: 215px;
+}
+
+.form-group > input{
+  display: inline-block;
+  width: 57%;
+}
+
+.form-group{
+  margin-bottom: 8px;
 }
 
 .navbar{

@@ -11,10 +11,20 @@ const config = {
       	type: 'component',
       	componentName: 'chartView',
       	componentState: { label: 'chart_view'},
-      	
+
+      	title: "market charts",
       	width: 720,
-        height: 450
+        height: 328
       },{
+        type: 'component',
+        componentName: 'chartView2',
+        componentState: { label: 'chart_view_2'},
+
+        title: "market volume charts",
+        width: 720,
+        height: 100
+      },
+      {
       	type: 'stack',
       	componentName: 'order-setting',
       	activeItemIndex: 0,
@@ -24,15 +34,18 @@ const config = {
 			    componentName: 'makeOrdersView',
 			    componentState: { text: 'Component 1' },
 
+          title: "make orders"
 			    },
 			    {
 			    type:'component',
 			    componentName: 'userSettingsView',
-			    componentState: { text: 'Component 2' }
+			    componentState: { text: 'Component 2' },
+
+          title: "user setting"
 			    }
 			  ],
 			  width: 720,
-        height: 450
+        height: 376
       }],
 
       width: 720
@@ -42,25 +55,32 @@ const config = {
       content:[{
         type: 'component',
         componentName: "todayOrdersView",
-        componentState: { label: 'B' }
+        componentState: { label: 'B' },
+        title: "today's orders"
+
       },{
         type: 'component',
         componentName: 'historyView',
-        componentState: { label: 'C' }
+        componentState: { label: 'C' },
+
+        title: "history"
       }],
       width: 720,
-      height: 900
+      height: 834
     }]
-  }]
+  }],
+  height: 757
 };
 
 const myLayout = new GoldenLayout( config , $("#panels") );
 
 myLayout.registerComponent( 'chartView', function( container, componentState ){
-
 	const section = container.getElement()[0];
 	container.getElement().html('<div id="chartContainer"></div>');
+});
 
+myLayout.registerComponent( 'chartView2', function( container, componentState ){
+  container.getElement().html('<div id="chartContainer2"></div>');
 });
 
 
@@ -76,13 +96,13 @@ myLayout.registerComponent( "historyView", function( container, componentState )
 
 myLayout.registerComponent( "makeOrdersView", function( container, componentState ){
 	const makeOrderHTML = '<div id="make-order-layout">' +
-      '<h2 class="form-signin-heading">Make order here</h2>' + 
+      '<h3 class="form-signin-heading">Make order</h3>' + 
       '<div>' +
         '<div class="form-group">' +
           '<label for="ParentOrder">Total Quantity (Parent Order)</label>' + 
           '<input type="text" class="input-block-level form-control" placeholder="Quantity" name="Quantity" id="quantity">' + 
         '</div>' +  
-        '<div class="form-group"' + 
+        '<div class="form-group">' + 
           '<label for="ChildOrder">Order Size (Child Order)</label>' + 
           '<input type="text" class="input-block-level form-control" placeholder="Order size" id="order_size">' + 
         '</div>' + 
